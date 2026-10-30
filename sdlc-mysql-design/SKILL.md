@@ -13,9 +13,9 @@ description: Design, write, modify, review, or optimize MySQL data models, table
 ## 使用方式
 
 - 以 MySQL 8.4 官方语义为校验基准，不限定实际使用版本；涉及版本差异时，核验目标版本的功能支持、约束执行和弃用状态。
-- 具体设计前，明确业务含义、完整性要求、主要读写方式、数据规模与增长、并发和一致性要求；审查时结合已有设计和实际负载判断。
+- 按任务需要明确业务含义、完整性要求、主要读写方式、数据规模与增长、并发和一致性要求；优先使用已有设计和负载证据，关键条件缺失时说明假设及其影响。
 - 以 InnoDB 本地事务为前提应用事务与并发规约。将事务内禁止查询、禁止使用 `CHECK`、外键约束及存储过程明确为本项目约定，不表述为 MySQL 的功能限制。
-- 本规范以同一记录不会在同一毫秒内发生多次修改为前提，不考虑同一毫秒内多次修改的情况。
+- 本规范以同一记录不会在同一毫秒内发生多次修改为前提，不考虑同一毫秒内多次修改的情况；该前提不等于数据库保证 `updated_at` 是不重复的版本标识。
 - 处理适用任务时，按任务范围遵循下列规则；规则含义或适用方式不明确时，按主题读取 [MySQL 数据表与 SQL 设计示例](references/mysql-design-examples.md) 中的对应内容，无须默认加载全部示例。
 
 ## 数据建模
@@ -84,6 +84,8 @@ description: Design, write, modify, review, or optimize MySQL data models, table
 
 ## SQL 编程
 
+- 禁止使用存储过程；业务分支及事务提交、回滚由应用控制。
+
 ### 查询
 
 - 在稳定的业务查询中显式列出所需列，避免 `SELECT *`。
@@ -112,7 +114,7 @@ description: Design, write, modify, review, or optimize MySQL data models, table
 
 - `COUNT(DISTINCT col)` 排除 `NULL`；多列形式仅统计参与列均非 `NULL` 的不同组合。
 
-- 无匹配行或全部值为 `NULL` 时，`SUM` 返回 `NULL`；仅在业务将该结果定义为零时补零。
+- `SUM` 对空输入或全为 `NULL` 的输入返回 `NULL`；带 `GROUP BY` 的查询若没有形成分组，则不返回该组结果行。仅在业务将空聚合结果定义为零时补零。
 
 - 连续时间区间优先采用左闭右开边界；按业务时区计算边界，并与字段值采用一致的时间基准。
 
@@ -120,19 +122,21 @@ description: Design, write, modify, review, or optimize MySQL data models, table
 
 ### 事务管理
 
-- **事务内语句限制**：查询、业务校验和写入准备在显式事务外完成；事务内仅执行必要的写语句及事务控制语句，禁止普通查询、锁定查询及写语句中的子查询或其他查询部分。参见[示例](references/mysql-design-examples.md#事务内语句限制)。
+- **事务内语句限制**：查询、业务校验和写入准备在显式事务外完成；事务内仅执行必要的数据修改语句及事务控制语句，禁止普通查询、锁定查询及写语句中的子查询或其他查询部分。参见[示例](references/mysql-design-examples.md#事务内语句限制)。
 
 - **事务连接**：必须共同成功的写入，不得因连接切换、异步执行或事务传播配置而脱离当前事务。参见[示例](references/mysql-design-examples.md#事务连接)。
 
-- **隐式提交**：禁止用 `START TRANSACTION` 模拟嵌套事务，或在业务写入之间将 `autocommit` 从 0 改为 1；两者都会隐式提交当前事务。参见[示例](references/mysql-design-examples.md#隐式提交)。
+- **隐式提交**：禁止用 `START TRANSACTION` 模拟嵌套事务，或在业务写入之间将 `autocommit` 从 0 改为 1；两者都会隐式提交当前事务。`ALTER TABLE`、`TRUNCATE TABLE` 等 DDL 不得混入业务写事务。参见[示例](references/mysql-design-examples.md#隐式提交)。
+
+- **失败处理**：必要写入报错或结果不满足业务条件时，停止后续写入并回滚整个事务，不假定单条语句失败已撤销此前写入。死锁或锁等待超时后，仅在完整回滚且操作可安全重试时有限重试整个事务；提交结果不明时先按幂等标识核对结果。参见[示例](references/mysql-design-examples.md#失败处理)。
 
 - **外部操作边界**：本地事务不保障外部服务调用或消息发送共同提交、回滚。参见[示例](references/mysql-design-examples.md#外部操作边界)。
 
 ### 并发控制
 
-- **业务条件更新**：优先使用乐观锁，以业务字段校验写入时的前置条件；可用单条条件更新完成时，不额外开启显式事务。参见[示例](references/mysql-design-examples.md#业务条件更新)。
+- **业务条件更新**：优先在写语句中用业务字段校验写入时的前置条件；依赖事务外读取值计算新值时，须同时校验相关原值或有效版本标识，防止覆盖并发修改；可用单条条件更新完成时，不额外开启显式事务。参见[示例](references/mysql-design-examples.md#业务条件更新)。
 
-- **更新时间校验**：无合适的业务字段时，可用 `updated_at` 匹配读取到的原值；读写、序列化及参数绑定须完整保留毫秒。参见[示例](references/mysql-design-examples.md#更新时间校验)。
+- **更新时间校验**：无合适的业务字段时，可用 `updated_at` 匹配读取到的原值，前提是相关修改均会改变该值，且旧值在并发校验期间不会被复用；读写、序列化及参数绑定须完整保留毫秒。无法保障此前提时，采用不复用的版本标识等并发控制方案。参见[示例](references/mysql-design-examples.md#更新时间校验)。
 
 - **引用完整性**：通过条件更新、唯一约束及必要的事务维护引用完整性，处理新增或变更引用与目标删除或失效的并发竞争。参见[示例](references/mysql-design-examples.md#客户引用的并发维护)。
 
