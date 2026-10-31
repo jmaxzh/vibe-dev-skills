@@ -1,11 +1,11 @@
-# 桌面端界面与交互设计原则
+# Desktop UI and Interaction Design Principles
 
-## 使用方式
+## Usage
 
-- 读取[公共原则](../SKILL.md#公共原则)，按目标操作系统、输入方式和窗口使用场景选取以下原则。
-- 设计对象在浏览器中运行时，同时读取[网页原则](web-ui-interaction.md)。
+- Read the [shared principles](../SKILL.md#shared-principles) and select the following rules for the target OS, input method, and window usage.
+- For interfaces running in a browser, also read [web principles](web-ui-interaction.md).
 
-## 平台原则
+## Platform principles
 
-- **窗口适配**：适配支持的窗口尺寸和显示缩放比例；随可用空间调整面板与内容布局，保持主要内容和操作可用。
-- **快捷键与焦点恢复**：按平台惯例提供常用快捷键，避免干扰文本输入；关闭弹层后，将焦点恢复至触发控件或后续操作所需的位置。
+- **Window adaptation**: support target window sizes and display scaling. Adjust panels and content to available space while retaining access to primary content and actions.
+- **Shortcuts and focus restoration**: provide common shortcuts according to platform conventions without disrupting text input. After closing an overlay, restore focus to the trigger or the control needed for the next action.

@@ -3,66 +3,66 @@ name: sdlc-instr-doc-design
 description: Design, write, revise, and review instructions, prompts, skills, and instructional or explanatory documents. Use for document artifacts, including knowledge-base documents, not ordinary conversational answers. Knowledge-base factual audits follow the applicable knowledge-base rules.
 ---
 
-# 指令与文档设计原则
+# Instruction and Documentation Design Principles
 
-## 适用范围
+## Applicability
 
-- 为指令、提示词、技能及文档产物的设计、撰写、修改和审查应用本技能；不用于普通对话回答。
-- 按目标产物已有约定处理领域规则、格式和维护权限，不将项目或知识库的专属要求推广到其他产物。
+- Apply this skill to designing, writing, modifying, and reviewing instructions, prompts, skills, and document artifacts; not to ordinary conversational answers.
+- Follow the target artifact's established domain rules, format, and maintenance permissions. Do not extend project- or knowledge-base-specific requirements to other artifacts.
 
-## 共同表达规则
+## Shared expression rules
 
-- 优先沿用项目或文档已定义的术语，未定义时采用业界通用术语；按需解释影响理解的概念。
-- 同一概念使用同一规范术语，同一术语仅表达一个概念；不要为避免重复轮换同义词。
-- 识别原始表述的实际含义，转换为规范表述，不机械沿用；存在多义或定义冲突时，明确含义、范围及与相近概念的区别。
-- 消除指代歧义，明确否定范围，区分可能原因与确定原因。
-- 按内容的逻辑关系表达，保持事实准确、语义完整；不因压缩措辞拆散必要的条件、否定和因果关系。
+- Prefer terms already defined by the project or document; otherwise use established industry terms. Explain concepts that affect understanding as needed.
+- Use one standard term per concept and one concept per term. Do not alternate synonyms merely to vary wording.
+- Identify the intended meaning of original wording and express it in standard terms rather than copying it mechanically. Clarify meaning, scope, and distinctions when terms are ambiguous or definitions conflict.
+- Remove ambiguous references, clarify the scope of negation, and distinguish possible from confirmed causes.
+- Organize content logically, retaining factual accuracy and complete meaning. Do not lose necessary conditions, negation, or causal relationships through compression.
 
-## 按内容用途读取
+## Read by content purpose
 
-- 设计、修改或审查约束模型行为的指令、提示词、技能及文档中的模型执行规则时，读取[提示词设计指导原则](references/prompt-design.md)。
-- 处理供读者理解、操作或排障的文档时，读取[文档设计原则](references/document-design.md)；不因包含祈使句或步骤而加载提示词参考。
-- 文档同时包含需要设计或审查的模型指令时，组合使用两份参考，按具体内容分别应用；不默认加载全部参考文件。
+- When designing or reviewing instructions, prompts, skills, or model execution rules within documents, read the [Prompt Design Guidelines](references/prompt-design.md).
+- For documents that help readers understand, operate, or troubleshoot something, read the [Documentation Design Principles](references/document-design.md). Imperative wording or steps alone do not require loading the prompt reference.
+- If a document also contains model instructions that need design or review, combine both references for the relevant content. Do not load all references by default.
 
-## 工作模式
+## Working modes
 
-根据用户请求选择模式：新建产物时执行“新建”；仅要求审查时不修改目标产物；要求修改已有产物时，执行“审查并修改”。
+Select a mode from the user's request: create for new artifacts; review only without changing target artifacts when only a review is requested; review and revise for changes to existing artifacts.
 
-开始前，明确处理范围、文档用途及适用约定，按内容用途读取对应参考。
+Before starting, establish the scope, document purpose, and applicable conventions, then load references by content purpose.
 
-### 新建
+### Create
 
-- 根据目标、受众和适用约定编写产物，按对应参考检查内容与表达。
-- 检查预期内容是否齐全、条件与约束是否明确，以及与相关文档是否一致；修正发现的问题后交付。
+- Write the artifact for its goals, audience, and applicable conventions, checking content and expression against the relevant references.
+- Check content completeness, explicit conditions and constraints, and consistency with related documents. Correct issues before delivery.
 
-### 仅审查
+### Review only
 
-- 按适合任务的方式组织审查，不要求逐文档执行。
-- 按实际问题报告具体位置、问题、影响和修订建议，区分已确认问题、待确认事项及未验证范围。
+- Organize the review appropriately for the task; document-by-document execution is not required.
+- Report specific locations, problems, impacts, and revision suggestions. Distinguish confirmed issues, matters needing confirmation, and unverified scope.
 
-### 审查并修改
+### Review and revise
 
-必须逐文档执行。可以预先读取相关文档以理解上下文，但每份需要修改的文档都必须依次完成“修改—对比—融合”三步并通过验收，才能开始修改下一份。不得先批量修改多份文档，再统一对比或融合。
+Work document by document. Related documents may be read in advance for context, but each document being changed must complete revision, comparison, and integration, and pass acceptance before changes begin on the next document. Do not revise multiple documents first and compare or integrate them afterward as a batch.
 
-开始修改当前文档前，保留可回查的修改前版本，识别实际问题，确定修改目标；无需修改的文档说明判断依据后保持原样。
+Before revising a document, preserve a retrievable original, identify actual issues, and set revision goals. Explain why documents needing no change are left unchanged.
 
-1. **修改**：针对已识别的问题修订；没有修改必要的内容保持原样。
-2. **对比**：对照修改前版本与修改后版本，明确各自的优势与不足，检查有效信息、必要解释、条件、约束及行为边界是否完整，确定需要保留、恢复或调整的内容。仅查看差异或运行差异工具不算完成本步，必须形成具体判断。
-3. **融合**：依据对比结论，保留修改后的有效改进，恢复或整合修改前仍有价值且未被保留的内容；存在冲突时，依据文档目标、事实和适用约束处理。若无需再次改动，明确说明原有优势如何得到保留以及无需调整的依据，不得跳过本步。
+1. **Revise**: address identified issues; leave content unchanged when no change is needed.
+2. **Compare**: compare original and revised versions, explicitly assessing their strengths and weaknesses. Check retention of useful information, necessary explanations, conditions, constraints, and behavioral boundaries. Decide what to retain, restore, or adjust. Viewing a diff alone does not complete this step; reach specific conclusions.
+3. **Integrate**: retain useful improvements and restore or integrate valuable original content omitted from the revision. Resolve conflicts according to document goals, facts, and applicable constraints. If no additional edit is needed, explicitly explain how original strengths were retained and why no adjustment is necessary. Do not skip this step.
 
-完成三步后，将融合后的版本与修改前版本对比验收。满足完成条件则结束当前文档；未满足且有明确改进方向时，继续修订并重新执行“对比—融合—验收”。无法形成满足条件的修订版本时，恢复当前文档的修改前版本，报告未解决问题及原因。
+After these steps, compare the integrated result with the original for acceptance. Finish the document if it meets the completion criteria. Otherwise, if a clear improvement is possible, revise again and repeat comparison, integration, and acceptance. If a satisfactory revision cannot be produced, restore the original and report unresolved issues and reasons.
 
-在开始修改下一份文档前，简要记录当前文档的修改内容、对比判断、融合处理及验收结论，可放在进度说明中，无需另建报告文件。记录具体结果，不以“已对比”“已融合”代替判断依据。
+Before moving to the next document, briefly record changes, comparison conclusions, integration decisions, and acceptance results. A progress update is sufficient; no separate report file is required. Record concrete findings, not just claims that comparison or integration occurred.
 
-全部文档处理完毕后，检查修改涉及的跨文档一致性；需要补改时，对涉及的文档执行同一流程。
+After all documents are complete, check cross-document consistency. Apply the same process to any documents requiring follow-up changes.
 
-### 完成条件与结果报告
+### Completion criteria and reporting
 
-- 新建产物应满足任务目标与适用约定；修改应解决目标问题，保留原有有效内容，不引入新的遗漏、歧义、矛盾或冗余。
-- 有依据地删除错误、失效、无关或重复内容不属于损失。
-- 简要报告主要改进、通过对比保留或融合的优势，以及未解决问题和验证限制；未经验证的部分不宣称无损。
+- New artifacts must meet task goals and applicable conventions. Revisions must solve target issues, retain valid original content, and introduce no omissions, ambiguity, contradictions, or redundancy.
+- Removing content with evidence that it is wrong, obsolete, unrelated, or duplicated is not information loss.
+- Briefly report major improvements, strengths retained or integrated through comparison, unresolved issues, and verification limits. Do not claim lossless revision for unverified content.
 
-## 审查边界
+## Review boundaries
 
-- 提示词审查使用对应参考的最终检查；面向读者的文档审查使用文档参考，不强制套用提示词维度。
-- 知识库表达审查按内容用途读取参考并遵循目标文档约定，不自动扩展为事实审计；专项审查中的事实来源、内容归属、实施状态和跨文档一致性，按适用的知识库规范和审查流程核查。
+- Use the prompt reference's final checklist for prompt reviews and the documentation reference for reader-facing document reviews. Do not force prompt dimensions onto the latter.
+- For knowledge-base expression reviews, select references by content purpose and follow target-document conventions; do not automatically expand into factual audits. For dedicated knowledge-base audits, follow the applicable knowledge-base rules for sources of truth, content ownership, implementation status, and cross-document consistency.

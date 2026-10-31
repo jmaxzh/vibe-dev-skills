@@ -3,40 +3,40 @@ name: cc-connect-integration
 description: Deploy, configure, maintain, or troubleshoot CC Connect integrations between messaging platforms and local coding agents, including optional Codex desktop transcript mirrors.
 ---
 
-# CC Connect 集成
+# CC Connect Integration
 
-通过 CC Connect 将消息平台接入本机编程工具，按需将源会话中的已完成问答同步为桌面副本。适用于首次部署、已有部署维护、迁移、升级及排障。
+Connect messaging platforms to local coding tools through CC Connect, optionally synchronizing completed exchanges into desktop copies. Use for initial deployment, maintenance, migration, upgrades, and troubleshooting.
 
-本文将执行端用于处理消息的会话称为“源会话”，将同步到桌面端、仅供查看的会话称为“桌面副本”；“桌面镜像”指生成和更新副本的同步功能。
+A "source session" is the execution-side session processing messages. A "desktop copy" is its synchronized, view-only desktop session. "Desktop mirroring" means the synchronization that creates and updates those copies.
 
-## 环境与能力选择
+## Environment and capability selection
 
-- 先检查实际操作系统、CC Connect 与编程工具的可执行文件及版本、已有配置和服务、工作目录、认证后端及会话存储。保留用户明确选择；无法从环境确定且影响方案的选择再询问。
-- 按已安装版本的帮助、配置示例和官方资料确认消息平台及编程工具支持情况。路径、模型、推理强度、项目 ID、会话文件名和服务标识由实机发现或明确配置取得，不沿用示例值，也不无条件安装最新版本。
-- 确定是否需要桌面镜像。先验收消息收发主链路，再处理可选镜像；镜像不可用时说明限制，继续处理可独立运行的主链路。
+- Inspect the actual OS, CC Connect and coding-tool executables and versions, configuration and services, working directories, authentication backend, and session storage first. Respect explicit user choices; ask only for consequential decisions that cannot be determined from the environment.
+- Verify supported platforms and tools against installed-version help, configuration examples, and official sources. Discover or explicitly configure paths, models, reasoning effort, project IDs, session filenames, and service labels. Do not reuse example values or unconditionally install the latest version.
+- Determine whether desktop mirroring is needed. Verify messaging first, then optional mirroring. If mirroring is unavailable, explain limits and continue the independently usable messaging integration.
 
-## 部署与维护
+## Deployment and maintenance
 
-按[部署与维护](references/deployment-and-maintenance.md)处理认证、消息接入、会话隔离、自启动和故障排查。依据授权范围执行首次安装或已有部署维护，不重复初始化已有会话存储。
+Follow [deployment and maintenance](references/deployment-and-maintenance.md) for authentication, messaging, session isolation, startup, and troubleshooting. Install or maintain within authorization without reinitializing existing session storage.
 
-- 固定使用 `quiet` 对话显示模式；飞书群必须使用话题模式，并按话题隔离源会话。具体配置及验收见[部署与维护](references/deployment-and-maintenance.md#固定配置)。
-- 模型与权限模式按需求选择，不默认授予完全访问权限。
-- 区分消息平台应用密钥、编程工具登录和可选平台 CLI 授权。只有实际认证后端支持且验证通过时才共享凭证文件；共享凭证不能取消源会话与桌面副本的存储隔离。
-- 自启动沿用目标系统适用的服务管理器；先识别已有服务，避免重复实例。配置应明确可执行文件、工作目录和后台环境，不依赖交互式 shell 的初始化。
-- 维护时保留源会话、镜像映射及持久化日志；升级前备份相关配置与状态，验证兼容性后再恢复服务。
+- Always use `quiet` conversation display mode. Feishu groups must use topic mode with source sessions isolated by topic. See [fixed configuration](references/deployment-and-maintenance.md#fixed-configuration) for setup and acceptance.
+- Choose models and permission modes according to needs; do not grant full access by default.
+- Distinguish messaging-platform app secrets, coding-tool login, and optional platform CLI authorization. Share credential files only when the actual backend supports it and verification passes. Shared credentials do not remove source/copy storage isolation.
+- Use the target OS's appropriate service manager. Identify existing services first to avoid duplicates. Specify executable paths, working directories, and background environment rather than relying on interactive shell initialization.
+- Preserve source sessions, mirror mappings, and persistent logs during maintenance. Back up configuration and state before upgrades; restore services after compatibility checks.
 
-## 可选桌面镜像
+## Optional desktop mirroring
 
-对于 Codex，阅读[Codex 镜像实现](references/codex-mirror-example.md)，使用随包脚本生成配置并检查兼容性。脚本只实现文档所述的 legacy 会话及 IPC v11 适配，不因版本相近而视为兼容。
+For Codex, read [Codex mirror implementation](references/codex-mirror-example.md) and use bundled scripts to generate configuration and check compatibility. They support only the documented legacy session format and IPC v11 adapter; nearby versions are not automatically compatible.
 
-对于其他编程工具，检查其会话导出、导入、订阅和并发写入能力，选择有依据的同步方式。Codex 的数据库、锁和内部协议不能通过修改工具名称直接复用；没有适用接口时说明桌面同步暂不可用，不改写其未知存储结构。
+For other tools, inspect export, import, subscription, and concurrent-write support before choosing synchronization. Codex databases, locks, and internal protocols cannot be reused by changing a tool name. If no suitable interface exists, explain desktop synchronization is unavailable; do not modify unknown storage structures.
 
-## 验收与交付
+## Acceptance and delivery
 
-按实际部署范围验收，并区分配置检查、隔离测试与目标环境实测结果：
+Verify actual deployment scope and distinguish configuration checks, isolated tests, and target-machine validation:
 
-- 主链路：验证实际消息收发、目标工作目录及所选编程工具。
-- 桌面镜像：验证多轮追加、会话区分、打开副本时源会话可续聊、重启恢复、归档及手动取消归档。
-- 自启动：单独验证用户退出登录并重新登录后的服务启动情况。
+- Messaging: verify actual sending/receiving, the target working directory, and selected coding tool.
+- Desktop mirroring: verify multi-turn append, session separation, continued source conversation while a copy is open, restart recovery, archiving, and manual unarchiving.
+- Startup: separately verify service startup after user logout and login.
 
-交付实际部署参数、服务管理方式、日志与状态位置、恢复步骤及未验证范围；不包含凭证或真实聊天正文。历史包的测试结果不能替代本次或目标机器验证。
+Deliver actual parameters, service management, log/state locations, recovery steps, and unverified scope, excluding credentials and real chat text. Historical package results do not replace current or target-machine verification.

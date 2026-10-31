@@ -1,35 +1,35 @@
-# 文档设计原则
+# Documentation Design Principles
 
-设计、撰写、修改或审查供读者理解、操作或排障的文档时，使用以下规则，并遵循主技能的[共同表达规则](../SKILL.md#共同表达规则)。
+Use these rules when designing, writing, modifying, or reviewing documents for understanding, operation, or troubleshooting. Follow the main skill's [shared expression rules](../SKILL.md#shared-expression-rules).
 
-操作说明和故障排查说明仅在编写对应内容时应用，不要求概念说明采用步骤结构。其他技能可为回答中的操作或排障说明仅复用对应章节，不启用主技能或整套文档设计规则。
+Apply operating and troubleshooting guidance only when writing those types of instructions; conceptual explanations need not use a step structure. Other skills may reuse just these sections for operational or troubleshooting answers without enabling the main skill or the full documentation rules.
 
-## 内容设计
+## Content design
 
-- 明确文档目的、说明对象及预期用途；按读者及其合理知识背景选择内容和抽象层次。
-- 从读者已知出发，补充理解主题所需的背景、问题缘由和关键概念；不因模型掌握相关知识而删除读者需要的解释。
-- 解释过程或机制时，按因果关系讲清原因、过程与结果，补齐必要逻辑环节；按理解难度提供通俗表达和具体例子。
-- 区分事实、假设与待确认结论；需要论证或来源支持时，保留必要依据、权衡和不确定性，不以简短替代完整。
-- 仅保留影响理解或使用的内容，删除套话、无效修饰与重复解释；仅在实际用途需要时规定格式、长度和结构。
-- 操作要求使用指令句，背景、原理和事实使用说明性表达；不将概念说明强制改写为操作步骤。文档中的模型指令需要设计或审查时，按主技能入口读取提示词参考。
+- Establish the document's purpose, subject, and intended use. Choose content and abstraction level for readers and their reasonable prior knowledge.
+- Start from what readers know. Supply background, reasons, and key concepts necessary to understand the subject; do not omit explanations readers need merely because the model knows them.
+- Explain processes and mechanisms in causal order: why they happen, how they work, and their outcomes. Bridge key logical gaps with plain language and concrete examples as needed.
+- Distinguish facts, assumptions, and conclusions needing confirmation. Preserve necessary evidence, tradeoffs, and uncertainty; do not sacrifice completeness for brevity.
+- Keep content that affects understanding or use; remove filler, ineffective embellishment, and repetition. Specify formats, lengths, and structures only where their purpose requires them.
+- Use imperative sentences for operations, and descriptive sentences for background, principles, and facts. Do not force conceptual explanations into steps. For model instructions needing design or review, load the prompt reference through the main skill.
 
-## 操作说明
+## Operating instructions
 
-- 每个步骤包含一个主要动作；以明确动作开始，写清动作对象。
-- 按执行顺序拆分多个顺序动作；同时发生或不可分的动作保留在同一步。
-- 将执行前必须知道的条件、风险和限制放在动作之前；条件较多时，单独列出前置条件。
-- 区分人工操作与系统自动行为；不要将系统自动行为写成人工步骤。
-- 对影响后续操作的步骤，说明预期结果及继续执行的条件；整体结果无法直接判断时，补充验证方式。
+- Give each step one main action. Start with a clear action and name its object.
+- Split sequential actions into ordered steps; retain simultaneous or inseparable actions within the same step.
+- Put prerequisites, risks, and limits before the affected action. Use a separate prerequisites section when numerous conditions apply.
+- Distinguish human actions from automatic system behavior; do not describe automatic behavior as a human step.
+- For steps affecting subsequent actions, state expected results and conditions for continuing. Include verification when the overall outcome is not directly observable.
 
-## 故障排查说明
+## Troubleshooting instructions
 
-- 按实际排查流程组织说明，区分现象、检查步骤、判断条件和恢复操作。
-- 为检查步骤写明判断条件及对应的后续操作；按任务需要说明恢复操作的验证方式，以及停止排查或转交处理的条件。
+- Organize around the actual troubleshooting process, separating symptoms, checks, decision conditions, and recovery actions.
+- Give each check decision criteria and corresponding next actions. Include recovery verification, stopping conditions, or escalation conditions as needed.
 
-## 修改与审查
+## Revision and review
 
-- 保留准确、清晰且符合用途的信息；针对实际需求或问题纠错、补充、压缩和调整，不为统一措辞而全面改写。
-- 删除失效或无关内容；合并重复解释时，保留条件、对象或作用不同的信息，并核对必要背景、因果和依据是否完整。
-- 跨文档重复维护同一规则时，确定维护位置，其余位置引用；保留服务当前读者且与来源一致的必要摘要。
-- 按文档目的和读者需要检查信息完整性、说明顺序、论证依据及示例作用；不套用提示词的任务分解、工具调用等维度。
-- 按主技能的审查边界报告问题；知识库专属的内容归属、规范性来源、实施状态及维护权限遵循适用的知识库规则。
+- Retain accurate, clear, useful information. Correct, supplement, compress, or reorganize for actual needs; do not rewrite everything just to standardize wording.
+- Remove obsolete or irrelevant content. When merging repeated explanations, retain information with distinct conditions, objects, or effects; check necessary background, causality, and evidence.
+- When the same rule is maintained across documents, establish its maintenance location and reference it elsewhere. Retain necessary summaries consistent with the source and useful to current readers.
+- Check completeness, explanation order, supporting evidence, and examples against document purpose and reader needs. Do not impose prompt-specific task decomposition or tool-use dimensions.
+- Report issues within the main skill's review boundaries. Check knowledge-base content ownership, normative sources, implementation status, and maintenance permissions under the applicable knowledge-base conventions and review process.

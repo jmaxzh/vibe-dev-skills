@@ -1,129 +1,129 @@
-# 项目知识库规范
+# Project Knowledge-Base Conventions
 
-## 文档设计与表达
+## Document design and expression
 
-- 编写、修改或审查文档时，遵循[指令与文档设计原则](../../sdlc-instr-doc-design/SKILL.md)；本规范补充知识库专属的组织、事实来源和维护要求。
+- Follow [Instruction and Documentation Design Principles](../../sdlc-instr-doc-design/SKILL.md) when writing, modifying, or reviewing documents. These conventions add knowledge-base-specific organization, sources of truth, and maintenance requirements.
 
-- 按所属语言的命名惯例编写代码标识符，保持其与文档术语明确对应。
-- 按需使用术语词典，集中维护规范定义、代码名称及必要的别名映射。按需在正文提供一致的简短释义；不要另立定义。
-- 发现术语不一致时，先区分名称差异与概念差异，再按任务范围修正文档和代码。涉及公共 API、持久化字段或外部协议名称时，保留必要的兼容性，明确映射关系。
-- 按文档用途确定读者：产品使用说明面向产品使用者，开发与维护说明面向相应维护者。操作说明围绕读者可执行的任务和可感知的结果组织，不以实现细节代替必要步骤。
+- Name code identifiers according to their programming language's conventions, with clear mappings to document terminology.
+- Maintain standard definitions, code names, and necessary aliases in a glossary as needed. Give consistent brief explanations in content where useful; do not create separate definitions.
+- When terminology differs, first distinguish name differences from conceptual differences, then correct documents and code within scope. Preserve necessary compatibility for public APIs, persisted fields, and external protocols, and state mappings.
+- Identify readers by document purpose: product instructions for users, development and maintenance instructions for the corresponding maintainers. Organize operations around reader-executable tasks and observable outcomes; implementation details do not replace necessary steps.
 
-## 文档职责
+## Document responsibilities
 
-- 为内容页选择一种 Diátaxis 类型作为主要职责；保留完成该职责所必需的简短背景和说明，不混合其他类型的独立内容。
+- Choose one Diátaxis type as each content page's primary responsibility. Retain brief background needed for it without mixing independent content of other types.
 
-| 类型            | 导向 | 回答                 | 示例                  |
-| --------------- | ---- | -------------------- | --------------------- |
-| **Tutorial**    | 学习 | 怎么上手？           | 新手引导、Quick Start |
-| **How-to**      | 任务 | 怎么完成 X？         | 操作步骤、配置指南    |
-| **Reference**   | 信息 | X 的精确规格是什么？ | API 参考、配置项清单  |
-| **Explanation** | 理解 | 为什么这样设计？     | 当前架构原理、稳定权衡 |
+| Type | Orientation | Answers | Examples |
+| --- | --- | --- | --- |
+| **Tutorial** | Learning | How do I get started? | Onboarding, quick start |
+| **How-to** | Tasks | How do I accomplish X? | Procedures, configuration guides |
+| **Reference** | Information | What is X's exact specification? | API reference, configuration inventory |
+| **Explanation** | Understanding | Why is it designed this way? | Current architecture, stable tradeoffs |
 
-- 通过交叉链接补充其他类型的独立内容，不在当前页面内嵌完整教程、规格或原理说明。
-- 仅为涉及系统架构、当前设计原理或稳定权衡的 Explanation 按需使用 arc42。
-- 将 arc42 仅用于组织单篇架构文档。不要用它决定文档类型、目录结构或文件名。
-- 按需选择 arc42 章节：Introduction & Goals、Constraints、Scope、Solution Strategy、Building Block、Runtime、Deployment、Cross-cutting、Quality、Risks、Glossary。
+- Cross-link independent content of other types rather than embedding full tutorials, specifications, or explanations.
+- Use arc42 only as needed for Explanations about architecture, current design principles, or stable tradeoffs.
+- Use arc42 to organize individual architecture documents, not to determine document types, directory structure, or filenames.
+- Select arc42 sections as needed: Introduction & Goals, Constraints, Scope, Solution Strategy, Building Block, Runtime, Deployment, Cross-cutting, Quality, Risks, Glossary.
 
-## 命名规范
+## Naming
 
-- 使用 `tutorial-`、`howto-`、`ref-`、`expl-` 分别标识 Tutorial、How-to、Reference、Explanation。
-- 将 `index.md` 作为导航页。豁免类型分类与文件名前缀。
+- Use `tutorial-`, `howto-`, `ref-`, and `expl-` for Tutorial, How-to, Reference, and Explanation respectively.
+- Use `index.md` for navigation, exempt from type classification and filename prefixes.
 
-## 目录设计原则
+## Directory design principles
 
-- 按稳定领域或功能划分目录；不要镜像代码目录。
-- 统一同级划分标准；让子目录细化父目录范围。
-- 聚合同一主题的不同类型文档；用文件名前缀区分类型。
-- 为主题指定唯一归属；集中维护公共知识，通过链接引用。
-- 按需拆分子主题；避免空目录与无意义层级。
-- 保持目录与导航一致；调整路径时同步更新引用。
+- Divide directories by stable domains or functions, not as mirrors of code directories.
+- Apply consistent criteria among peers; child directories refine parent scope.
+- Group different document types for the same subject; distinguish types with filename prefixes.
+- Give each subject one owner; maintain shared knowledge centrally and reference it.
+- Split subtopics as needed; avoid empty directories and meaningless levels.
+- Keep directories and navigation consistent; update references when paths change.
 
-参照以下示例，按项目语义命名；不要照搬目录：
+Use these examples as guidance and name by project semantics, not by copying the layout:
 
-- 同一功能包含规范、原理与操作说明 → 归入 `search/`，使用 `ref-`、`expl-`、`howto-` 区分。
-- 多个功能共用权限规则 → 在 `authorization/` 定义公共规则，各功能引用并补充专属行为。
-- `operations/` 内容增多 → 按 `deployment/`、`backup/` 等稳定子主题拆分；不要拆成 `part-1/`、`part-2/`。
+- A function with specifications, explanations, and procedures → group in `search/`, using `ref-`, `expl-`, and `howto-`.
+- Authorization rules shared by functions → define in `authorization/`; each function references them and adds its own behavior.
+- Growing `operations/` content → split stable subtopics such as `deployment/` and `backup/`, not `part-1/` or `part-2/`.
 
-## 组织规范
+## Organization
 
-- 先查阅 `index.md`，按索引定位相关文档。
-- 让每个文件只承载一个主题。
-- 将每个文件控制在 500 行非空行以内。
-- 将每个目录的 Markdown 文件控制在 8 个以内，包含 `index.md`。超限时拆分子目录。
-- 在 `index.md` 中提供领域概览、核心导航和快速开始链接。不要内嵌教程或细节。
-- 按需在内容页开头提供主题概览。
-- 存在发布导航配置时，以其作为发布层级与可见性的唯一来源；新增页面时同步更新该配置和相关目录索引。没有发布导航配置时，以各目录 `index.md` 组织导航，不额外创建配置。
-- 在对应应用的根目录及适用运行环境中验证文档涉及的路径、命令、接口、配置和行为；多应用项目按文档涉及的应用选择根目录。
+- Read `index.md` first and use it to locate related documents.
+- Keep each file focused on one subject.
+- Keep each file within 500 nonblank lines.
+- Keep each directory within 8 Markdown files, including `index.md`; split subdirectories when exceeded.
+- Provide a domain overview, core navigation, and quick-start links in `index.md`, without embedding tutorials or details.
+- Add a subject overview at the start of content pages as needed.
+- If publication navigation configuration exists, use it as the sole source of publication hierarchy and visibility; update it and related indexes when adding pages. Otherwise use directory `index.md` navigation without creating extra configuration.
+- Verify documented paths, commands, interfaces, configuration, and behavior at the relevant application's root in an applicable environment. For multi-application projects, choose the root of the application discussed.
 
-## 格式规范
+## Formatting
 
-- 添加 YAML frontmatter。
-- 填写非空 `title`。
-- 按需填写 `summary` 和 `read_when`。
-- 为代码块标注语言。
-- 正文以段落和列表为主；对比、映射及参数清单可使用简单 Markdown 表格。
-- 表格采用单层表头和简短单元格，不承载长段解释、嵌套列表或操作步骤。
-- 按需使用图表和截图。
-- 不要为标题添加数字前缀。
-- 仅在步骤存在顺序时使用有序列表。
+- Add YAML frontmatter.
+- Provide a nonempty `title`.
+- Add `summary` and `read_when` as needed.
+- Label fenced code blocks with a language.
+- Prefer paragraphs and lists; simple Markdown tables suit comparisons, mappings, and parameter lists.
+- Use single-level table headers and short cells, without long explanations, nested lists, or procedures.
+- Use diagrams and screenshots as needed.
+- Do not number headings.
+- Use ordered lists only when sequence matters.
 
-## 视觉参考资料
+## Visual references
 
-- 用 Markdown 文档承载主要知识、规则和约束；图片和单页 HTML 仅作参考资料，不独立定义或修改规则。
-- 静态效果、布局和视觉对照推荐图片；组件状态、响应式布局和交互演示推荐单页 HTML。不强制提供视觉参考资料，优先复用已有且有效的材料。
-- 在所属文档的相关位置嵌入图片或链接 HTML，说明用途和必要的适用条件；不要求文字逐项复述视觉效果。
-- 单页 HTML 默认无需安装或构建即可在本地打开；内嵌样式和必要演示脚本，图片可用相对路径引用。
-- 明确演示范围，不将演示效果视为已实现能力。
-- 相关事实变化时，核对并更新受影响的参考资料及链接。
+- Keep primary knowledge, rules, and constraints in Markdown. Images and standalone HTML are references; they do not independently define or change rules.
+- Prefer images for static appearance, layouts, and visual comparisons; use standalone HTML for component states, responsiveness, and interaction demos. Visual references are optional; reuse valid existing materials first.
+- Embed images or link HTML at the relevant location in the owning document, explaining purpose and necessary conditions. Text need not restate every visual detail.
+- By default, standalone HTML should open locally without installation or build, with inline styles and necessary demo scripts; images may use relative paths.
+- State demonstration scope; do not treat demos as implemented capability.
+- When facts change, inspect and update affected references and links.
 
-## 实施状态
+## Implementation status
 
-- 仅为产品能力和设计方案标注 `规划` 或 `已实现`。
-- 在对应章节标题下标注状态。拆分混合状态的章节。
-- 仅收录已批准、当前有效且需长期维护的规划。
-- 不要将规划内容写成现有能力。
-- 不要为术语、规范和原理说明强加实施状态。
+- Mark only product capabilities and design solutions as `Planned` or `Implemented`.
+- Place status below the relevant section heading; split sections mixing statuses.
+- Include only approved, current plans needing long-term maintenance.
+- Do not describe planned functionality as existing capability.
+- Do not force implementation status onto terminology, conventions, or explanations of principles.
 
-## 内容边界
+## Content boundaries
 
-- 仅将当前有效、可复用、需长期维护且归属明确的知识写入项目知识库。优先更新已有权威文档；独立主题无法归入既有文档时，再新建页面。
-- 仅承载符合文档目的、主题和职责的事实。职责外内容即使正确，也不要保留。
-- 使用非穷举示例辅助说明。不要让示例承担完整清单职责。
-- 按知识价值从证据中提炼当前约束、必要理由和适用条件，不因来源类型排除有效知识。禁止将原始过程材料归档到项目知识库，不自动生成架构决策记录（ADR）或历史副本；既有档案按任务范围处理，不据此自动删除。
-- 文档内容修改、跨文档规则维护及必要摘要遵循[文档设计原则的修改与审查要求](../../sdlc-instr-doc-design/references/document-design.md#修改与审查)；以下条款规定知识库的事实职责与派生内容要求。
-- 分离文档、代码与专用契约的职责。为每项事实指定唯一规范性来源，即负责定义该事实的文档、代码声明或专用契约。
-- 在文档中定义产品需求、用户可感知行为、公共约束、设计意图、边界、不变量和稳定权衡。
-- 记录任务目标、必要操作路径、公共 API、命令和配置的用法。
-- 用代码声明或专用契约定义接口、配置和数据格式的精确规格，包括签名、Schema、默认值和完整取值范围。
-- 按需从规范性来源生成参考文档，或提供带来源、可校验的必要摘要和非穷举示例。不要在派生内容中独立定义或修改规格。
-- 更新涉及派生内容的文档时，核对其与规范性来源的一致性。通过生成方式更新生成内容。
-- 避免逐项复述易变实现。按文档目的选择抽象层次；按需说明理解、使用或维护系统所必需的组件职责、依赖、关键交互和执行机制。引用代码或专用契约定位精确实现。
-- 引用外部协议的官方规范。
-- 按文档目的、主题和事实职责判断内容归属。不要根据代码结构、内部名称或实现枚举决定文档内容。
-- 不要因代码变更机械更新文档。需求、用户可感知行为、公共契约或设计约束变化时，更新受影响的文档。文档存在错误、缺漏或不符合维护目标时，即使系统未变化，也应在任务范围内修订。
-- 用行为保持的实现重构检验实现细节泄漏：仅内部实现变化，且需求、用户可感知行为、公共契约、设计约束和文档负责的事实均未变化时，不机械改写正文。若正文只是逐项复述内部实现，按文档职责删除、抽象或改为来源引用；仍需更新失效的路径、符号等定位信息。不要将定位信息更新判为实现细节泄漏。
+- Record only current, reusable knowledge with clear ownership and long-term value. Update existing authoritative documents first; create a page only for an independent subject that does not fit existing ones.
+- Include facts fitting the document's purpose, subject, and responsibility; remove out-of-responsibility content even if correct.
+- Use non-exhaustive examples for explanation, not as complete inventories.
+- Extract current constraints, necessary rationale, and applicability from evidence by knowledge value, without excluding sources by type. Do not archive raw process materials or automatically create architecture decision records (ADRs) or historical copies. Handle existing archives within task scope; do not automatically delete them.
+- Follow [documentation revision and review](../../sdlc-instr-doc-design/references/document-design.md#revision-and-review) for content changes, cross-document rules, and necessary summaries. The following rules address factual responsibilities and derived content.
+- Separate responsibilities of documentation, code, and dedicated contracts. Assign each fact one normative source: the document, code declaration, or dedicated contract that defines it.
+- Define product requirements, user-observable behavior, public constraints, design intent, boundaries, invariants, and stable tradeoffs in documents.
+- Document task goals, necessary operating paths, and usage of public APIs, commands, and configuration.
+- Define exact interface, configuration, and data specifications in code declarations or dedicated contracts, including signatures, schemas, defaults, and full value ranges.
+- Generate references from normative sources as needed, or provide necessary verifiable summaries with source links and non-exhaustive examples. Do not independently define or change specifications in derived content.
+- When updating derived documentation, check consistency with normative sources. Update generated content through generation.
+- Avoid enumerating volatile implementation details. Choose abstraction by purpose; explain component responsibilities, dependencies, key interactions, and mechanisms necessary for understanding, usage, or maintenance. Reference code or contracts for exact implementation.
+- Cite official specifications for external protocols.
+- Determine content ownership by purpose, subject, and factual responsibility, not code structure, internal names, or implementation enumerations.
+- Do not mechanically update documents for code changes. Update affected documents when requirements, observable behavior, public contracts, or design constraints change. Correct errors, omissions, and maintenance problems within scope even when the system has not changed.
+- Use behavior-preserving refactoring to detect implementation leakage: if only internals change and requirements, observable behavior, contracts, constraints, and documented facts remain the same, do not mechanically rewrite content. If it merely enumerates internals, remove, abstract, or replace it with source references according to responsibility. Still update obsolete paths, symbols, and locators; locator updates are not implementation leakage.
 
-## 更新与规则变更
+## Updates and rule changes
 
-- 非实施场景更新知识库文档前，取得用户确认；用户已明确要求更新时，直接执行授权范围内的修改。涉及受保护文档时，遵循“人工验收”的具体修改确认要求。
-- 仅在规范与实现描述同一事实时比较。依据规范性来源报告文档偏差、实现偏差或规则冲突。不要自动覆盖任一方。
-- 变更长期规则前，按需查阅 Git 提交、diff 和讨论。
-- 发现冲突或影响时，在当前对话说明。仅在缺少必要信息或需要用户决定规则取舍时请求确认；继续处理不依赖确认的范围。
-- 确认后，将受影响的规则、说明和引用更新为当前有效内容；不要将讨论过程写入规范正文。
-- 证据不足或冲突时，标记待确认项。不要猜测或写入未确认结论。
+- Obtain user confirmation before knowledge-base updates outside implementation, unless explicitly requested already. For protected documents, follow the specific confirmation requirements under Human acceptance.
+- Compare specification and implementation only when they describe the same fact. Report documentation deviations, implementation deviations, or rule conflicts against normative sources; do not automatically overwrite either side.
+- Consult Git commits, diffs, and discussions as needed before changing long-term rules.
+- Explain conflicts and impacts in the current chat. Ask only for missing necessary information or user decisions on rule tradeoffs; continue independent work.
+- After confirmation, update affected rules, explanations, and references to current valid content without embedding discussion history.
+- Mark uncertain matters when evidence is missing or conflicting. Do not guess or record unconfirmed conclusions.
 
-## 人工验收
+## Human acceptance
 
-- 优先遵守本节；与本 skill 其他更新、清理、格式化或自动修复规则冲突时，以本节为准。
-- 检查正文、frontmatter 及关联说明。存在针对该文档或其中内容的“人工已验证”“人工验收通过”“人工已确认”等已完成人工验证的声明时，将整篇文档视为受保护文档。仅用于解释规则的引用或示例不构成验收声明；“待人工验证”“尚未确认”等未完成表述不触发保护。无法判断是否为实际验收声明时，先核实，期间保持文档不变。
-- 修改、移动、重命名或删除受保护文档前，展示具体拟改内容及理由，等待用户明确确认。将正文、格式、标题和路径变更一并纳入保护范围；不要自行移除保护标记。
-- 修改、移动、重命名或删除影响受保护文档表达的视觉参考资料时，遵循同样的具体修改确认要求。
-- 不要将概括性的整理、审查或修复授权视为对具体修改的确认。
-- 仅执行用户已确认的修改；超出确认范围时，重新提交确认。
-- 等待确认期间，继续只读审查及其他不依赖确认的工作。
+- These rules take priority over conflicting update, cleanup, formatting, or automatic-fix rules in this skill.
+- Inspect content, frontmatter, and related notes. Treat the entire document as protected when it declares completed human validation, such as "human-verified," "human acceptance passed," or "human-confirmed." Quotes or examples explaining this rule do not count, nor do pending or unconfirmed statements. If unclear, verify first and leave the document unchanged meanwhile.
+- Before modifying, moving, renaming, or deleting a protected document, show concrete proposed changes and reasons, then wait for explicit user confirmation. Protection includes content, formatting, headings, and paths; do not remove protection markers yourself.
+- Apply the same specific confirmation requirement to changes, moves, renames, or deletion of visual references affecting protected-document expression.
+- General authorization to organize, review, or fix does not confirm specific changes.
+- Execute only confirmed changes; submit additional changes for renewed confirmation.
+- While awaiting confirmation, continue read-only review and independent work.
 
-## 审查入口
+## Review entry points
 
-- 用户仅要求措辞、结构或表达审查时，使用“指令与文档设计原则”及本规范中适用的文档约定，不启动知识库专项审查。
-- 用户明确要求知识库专项审查、审核或校验时，加载[知识库审查](project-knowledge-base-review.md)；不要因知识提炼、落点建议、文档更新或证据读取启动审查。
+- For wording, structure, or expression review only, use Instruction and Documentation Design Principles and applicable document conventions here, without a dedicated knowledge-base audit.
+- Load [knowledge-base review](project-knowledge-base-review.md) for explicit audit, verification, or review of the knowledge base. Do not trigger it merely for knowledge extraction, filing suggestions, updates, or evidence reading.

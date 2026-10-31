@@ -3,207 +3,207 @@ name: sdlc-mysql-design
 description: Design, write, modify, review, or optimize MySQL data models, table structures, SQL, indexes, transactions, and concurrency control. Use when the task or project context establishes MySQL as the target database; do not select MySQL for generic database tasks or apply this skill to other databases.
 ---
 
-# MySQL 数据表与 SQL 设计
+# MySQL Table and SQL Design
 
-## 适用范围
+## Applicability
 
-- 任务或项目上下文明确使用 MySQL，且涉及数据建模、表结构、SQL、索引、事务或并发控制的设计、编写、修改、审查或优化时，自动应用本技能，无须用户显式调用。
-- 本技能独立使用，不依赖 SDLC 主流程。不得因通用数据库任务自动选定 MySQL，也不应用于仅涉及其他数据库的任务。
+- Apply automatically when MySQL is established by the task or project and work involves designing, writing, modifying, reviewing, or optimizing models, tables, SQL, indexes, transactions, or concurrency. Explicit invocation is unnecessary.
+- Use independently of the SDLC workflow. Do not select MySQL for generic database work or apply to tasks concerning only other databases.
 
-## 使用方式
+## Usage
 
-- 以 MySQL 8.4 官方语义为校验基准，不限定实际使用版本；涉及版本差异时，核验目标版本的功能支持、约束执行和弃用状态。
-- 按任务需要明确业务含义、完整性要求、主要读写方式、数据规模与增长、并发和一致性要求；优先使用已有设计和负载证据，关键条件缺失时说明假设及其影响。
-- 以 InnoDB 本地事务为前提应用事务与并发规约。将事务内禁止查询、禁止使用 `CHECK`、外键约束及存储过程明确为本项目约定，不表述为 MySQL 的功能限制。
-- 本规范以同一记录不会在同一毫秒内发生多次修改为前提，不考虑同一毫秒内多次修改的情况；该前提不等于数据库保证 `updated_at` 是不重复的版本标识。
-- 处理适用任务时，按任务范围遵循下列规则；规则含义或适用方式不明确时，按主题读取 [MySQL 数据表与 SQL 设计示例](references/mysql-design-examples.md) 中的对应内容，无须默认加载全部示例。
+- Use official MySQL 8.4 semantics as the validation baseline without restricting the deployed version. Verify feature support, constraint enforcement, and deprecation in the actual target version when differences matter.
+- Establish business meaning, integrity, main access patterns, scale/growth, concurrency, and consistency as needed. Prefer existing design/load evidence; explain assumptions and impacts when key conditions are absent.
+- Apply transaction and concurrency rules to local InnoDB transactions. Explicitly identify bans on queries within transactions, `CHECK`, foreign keys, and stored procedures as project conventions, not MySQL limitations.
+- Assume a record is not modified multiple times within one millisecond; such repeated changes are outside this specification's premise. This does not imply the database guarantees `updated_at` is a unique version identifier.
+- Follow applicable rules within task scope. If meaning or application is unclear, read the corresponding topic in [MySQL design examples](references/mysql-design-examples.md), not all examples by default.
 
-## 数据建模
+## Data modeling
 
-### 实体、关系与字段归属
+### Entities, relationships, and field ownership
 
-- **记录粒度**：定义每张表的一行代表哪个业务对象、关系或事件，保持同表记录粒度一致。参见[示例](references/mysql-design-examples.md#记录粒度)。
+- **Row grain**: define the business object, relationship, or event represented by a row; keep grain consistent within a table. See [examples](references/mysql-design-examples.md#row-grain).
 
-- **关联与唯一性**：定义关系两侧允许关联的最少和最多记录数；一对多在多方保存引用，一对一为引用列设置唯一约束，多对多使用关联表。允许同一对象组合重复关联时，定义各次关联的业务含义、区分依据和唯一性范围。参见[示例](references/mysql-design-examples.md#关联与唯一性)。
+- **Relationships and uniqueness**: define minimum and maximum cardinality on both sides. Store one-to-many references on the many side, enforce one-to-one with unique references, and use junction tables for many-to-many. For repeated associations of the same objects, define each event's meaning, identity, and uniqueness scope. See [examples](references/mysql-design-examples.md#relationships-and-uniqueness).
 
-- **字段归属**：将字段放入决定其值的业务对象、关系或事件对应的表，避免重复维护同一当前事实；历史快照按业务发生时的值保存，不随当前值同步修改。参见[示例](references/mysql-design-examples.md#字段归属)。
+- **Field ownership**: place a field with the object, relationship, or event determining its value; avoid duplicating current facts. Keep historical snapshots at event-time values, unchanged by current-value updates. See [examples](references/mysql-design-examples.md#field-ownership).
 
-- **引用完整性**：定义新增或变更引用时目标必须满足的存在性和状态条件，以及目标删除或失效时已有引用的处理规则；在相关写入流程中按“键与约束”和“并发控制”保障这些规则。参见[示例](references/mysql-design-examples.md#引用完整性)。
+- **Referential integrity**: define target existence/state conditions for new or changed references and handling of existing references after target deletion/invalidation. Enforce through write paths under Keys and constraints and Concurrency control. See [examples](references/mysql-design-examples.md#referential-integrity).
 
-## 表结构设计
+## Table design
 
-### 命名与注释
+### Names and comments
 
-- 使用小写字母、数字和下划线命名数据库、表和字段，不以数字开头，避免保留字和含义不明的缩写。
+- Name databases, tables, and columns using lowercase letters, digits, and underscores; do not begin with digits, use reserved words, or use unclear abbreviations.
 
-- 索引名体现关键列或用途；唯一索引和普通索引可分别使用 `uniq_`、`idx_` 前缀，主键索引名固定为 `PRIMARY`。
+- Name indexes for their columns or purpose. `uniq_` and `idx_` may identify unique and ordinary indexes; the primary index name is `PRIMARY`.
 
-- 修改字段含义、状态取值或约束时，同步更新字段注释和相关定义。
+- Update column comments and related definitions when meanings, state values, or constraints change.
 
-### 数据类型
+### Data types
 
-- 保持关联字段的数据类型和符号属性兼容且尽量一致。
+- Keep related columns' types and signedness compatible and as consistent as possible.
 
-- 精确金额使用明确精度和小数位的 `DECIMAL`，或明确最小单位的整数；定义币种和舍入规则。存储、传参及运算全程保持精确表示，禁止先用浮点数计算再转换。
+- Represent exact money with explicitly sized `DECIMAL` or integers in a defined smallest unit; define currency and rounding. Preserve exact representation through storage, parameters, and calculations; do not calculate in floating point before conversion.
 
-- 不为 `FLOAT`、`DOUBLE`、`DECIMAL` 设置已弃用的 `UNSIGNED` 属性。
+- Do not set deprecated `UNSIGNED` on `FLOAT`, `DOUBLE`, or `DECIMAL`.
 
-- 是非字段采用 `is_xxx` 和 `TINYINT UNSIGNED`，由应用层保证取值为 0、1。
+- Use `is_xxx` and `TINYINT UNSIGNED` for booleans, with application validation restricting values to 0 or 1.
 
-- 使用 `CHAR` 时核对尾随空格的处理语义。
+- Verify trailing-space semantics for `CHAR`.
 
-- `TIMESTAMP` 按会话时区与 UTC 转换，`DATETIME` 不做此自动转换；需要保留原始时区名称或偏移时另行存储。
+- `TIMESTAMP` converts between session time zone and UTC; `DATETIME` does not. Store original zone names or offsets separately when needed.
 
-- 审计时间使用 `created_at` 记录创建时间、`updated_at` 记录最后修改时间。可变业务记录设置两者，只追加记录仅设置前者；关联表等其他表按审计需求设置。
+- Use `created_at` for creation and `updated_at` for last modification. Mutable business records need both; append-only records need only creation time. Add them to junction or other tables according to audit needs.
 
-- 审计时间统一使用 `DATETIME(3)`、毫秒精度和北京时间，数据库连接时区统一为 `+08:00`。
+- Use `DATETIME(3)`, millisecond precision, and Beijing time for audit timestamps, with connection time zone `+08:00`.
 
-- 审计时间字段设置 `NOT NULL DEFAULT CURRENT_TIMESTAMP(3)`，`updated_at` 另设 `ON UPDATE CURRENT_TIMESTAMP(3)`；由数据库维护，应用不重复赋值。
+- Set audit timestamps to `NOT NULL DEFAULT CURRENT_TIMESTAMP(3)` and add `ON UPDATE CURRENT_TIMESTAMP(3)` for `updated_at`. Let the database maintain them; do not assign redundantly in the application.
 
-### 键与约束
+### Keys and constraints
 
-- 为 InnoDB 表显式定义稳定、尽量简短的主键；二级索引记录包含主键列，宽主键会增加二级索引成本。
+- Explicitly define stable, short primary keys for InnoDB. Secondary records contain primary-key columns, so wide primary keys increase secondary-index cost.
 
-- 必填字段设置 `NOT NULL`。
+- Mark required fields `NOT NULL`.
 
-- 禁止使用 `CHECK` 约束；各写入入口由应用层校验取值范围、枚举值及字段组合条件，失败时拒绝写入。参见[示例](references/mysql-design-examples.md#应用层校验)。
+- Do not use `CHECK`; validate ranges, enums, and field combinations in every application write entry point, rejecting invalid writes. See [examples](references/mysql-design-examples.md#application-validation).
 
-- 按业务唯一性范围设置唯一索引，不以“先查询再插入”代替唯一约束；唯一索引允许多个 `NULL`。
+- Enforce business uniqueness with unique indexes, not query-before-insert. Unique indexes allow multiple `NULL` values.
 
-- 按业务操作及租户等范围，为幂等请求标识设置唯一约束，参与列均设置 `NOT NULL`。
+- Enforce uniqueness for idempotency identifiers within business-operation/tenant scope, with all participating columns `NOT NULL`.
 
-- 禁止使用外键约束及其级联操作；通过业务写入流程维护引用完整性。
+- Do not use foreign-key constraints or cascades; preserve referential integrity through business write flows.
 
-### 字符集与排序规则
+### Character sets and collations
 
-- 文本采用 `utf8mb4`。
+- Use `utf8mb4` for text.
 
-- 保持关联字段的字符集和排序规则兼容且尽量一致。
+- Keep related columns' character sets and collations compatible and as consistent as possible.
 
-- 修改排序规则前，检查相等判断的变化及是否产生违反唯一约束的重复值。
+- Before collation changes, check equality changes and newly duplicate values violating uniqueness.
 
-## SQL 编程
+## SQL programming
 
-- 禁止使用存储过程；业务分支及事务提交、回滚由应用控制。
+- Do not use stored procedures. Application code controls branching, commits, and rollbacks.
 
-### 查询
+### Queries
 
-- 在稳定的业务查询中显式列出所需列，避免 `SELECT *`。
+- Explicitly select required columns in stable business queries; avoid `SELECT *`.
 
-- 分页或选取单条记录需要确定顺序时，使用能唯一确定记录顺序的排序键组合。
+- When pagination or single-row selection requires deterministic order, use a combination of sort keys uniquely ordering rows.
 
-- 游标包含完整排序键；并发修改排序键可能导致跨页遗漏或重复，游标分页不保证跨页快照一致性。
+- Include all sort keys in cursors. Concurrent sort-key changes can cause cross-page omissions/duplicates; cursor pagination does not guarantee a consistent cross-page snapshot.
 
-### 数据修改
+### Data modification
 
-- 不用 `INSERT IGNORE`、`UPDATE IGNORE` 掩盖本应失败的数据错误。
+- Do not hide errors that should fail using `INSERT IGNORE` or `UPDATE IGNORE`.
 
-- `UPDATE`、`DELETE` 禁止因空参数或动态条件遗漏退化为全表操作，不以 `LIMIT` 代替业务范围条件。
+- Prevent `UPDATE`/`DELETE` from degenerating into full-table operations due to empty parameters or missing dynamic predicates. `LIMIT` does not replace business scope conditions.
 
-- `updated_at` 随记录内容变更自动更新，不用于记录每次更新语句的执行时间。
+- `updated_at` automatically tracks content changes, not execution time of every update statement.
 
-- 不用 `REPLACE INTO` 代替普通更新；发生主键或唯一键冲突时，其替换语义可能使未提供字段恢复默认值，并触发删除和插入相关行为。
+- Do not replace ordinary updates with `REPLACE INTO`: on primary/unique conflict its replacement semantics can reset unspecified fields to defaults and trigger delete/insert behavior.
 
-### 表达式与函数
+### Expressions and functions
 
-- 比较值保持类型匹配，不依赖隐式类型转换决定关键业务比较结果。
+- Match comparison types; do not let implicit conversion determine critical business comparisons.
 
-- 长度校验区分字节数、字符数和用户可见字形数；`LENGTH` 返回字节数，`CHAR_LENGTH` 返回字符数，不代表用户可见字形数。
+- Distinguish bytes, characters, and user-visible graphemes in length checks. `LENGTH` counts bytes and `CHAR_LENGTH` characters, not visible graphemes.
 
-- `NOT IN` 的集合含 `NULL` 时，未匹配结果可能为 `UNKNOWN`，不能按普通“不属于集合”处理。
+- With `NULL` in a `NOT IN` set, an unmatched result may be `UNKNOWN`; do not treat it as ordinary non-membership.
 
-- `COUNT(DISTINCT col)` 排除 `NULL`；多列形式仅统计参与列均非 `NULL` 的不同组合。
+- `COUNT(DISTINCT col)` excludes `NULL`; its multi-column form counts distinct combinations only when all participating columns are non-`NULL`.
 
-- `SUM` 对空输入或全为 `NULL` 的输入返回 `NULL`；带 `GROUP BY` 的查询若没有形成分组，则不返回该组结果行。仅在业务将空聚合结果定义为零时补零。
+- `SUM` returns `NULL` for empty or all-`NULL` inputs. If `GROUP BY` forms no group, no row is returned for it. Substitute zero only when business rules define empty aggregation as zero.
 
-- 连续时间区间优先采用左闭右开边界；按业务时区计算边界，并与字段值采用一致的时间基准。
+- Prefer half-open time intervals: include the start and exclude the end. Compute boundaries in business time zone with the same time basis as stored values.
 
-## 事务与一致性
+## Transactions and consistency
 
-### 事务管理
+### Transaction management
 
-- **事务内语句限制**：查询、业务校验和写入准备在显式事务外完成；事务内仅执行必要的数据修改语句及事务控制语句，禁止普通查询、锁定查询及写语句中的子查询或其他查询部分。参见[示例](references/mysql-design-examples.md#事务内语句限制)。
+- **Statements inside transactions**: perform queries, business validation, and write preparation outside explicit transactions. Inside, allow only necessary modifications and transaction control; forbid ordinary/locking queries and subqueries or other query parts within writes. See [examples](references/mysql-design-examples.md#statements-inside-transactions).
 
-- **事务连接**：必须共同成功的写入，不得因连接切换、异步执行或事务传播配置而脱离当前事务。参见[示例](references/mysql-design-examples.md#事务连接)。
+- **Transaction connection**: writes that must succeed together must not escape the transaction through connection switching, asynchronous execution, or propagation settings. See [examples](references/mysql-design-examples.md#transaction-connection).
 
-- **隐式提交**：禁止用 `START TRANSACTION` 模拟嵌套事务，或在业务写入之间将 `autocommit` 从 0 改为 1；两者都会隐式提交当前事务。`ALTER TABLE`、`TRUNCATE TABLE` 等 DDL 不得混入业务写事务。参见[示例](references/mysql-design-examples.md#隐式提交)。
+- **Implicit commits**: do not simulate nested transactions with `START TRANSACTION` or switch `autocommit` from 0 to 1 between business writes; both implicitly commit. Keep DDL such as `ALTER TABLE` and `TRUNCATE TABLE` out of business write transactions. See [examples](references/mysql-design-examples.md#implicit-commits).
 
-- **失败处理**：必要写入报错或结果不满足业务条件时，停止后续写入并回滚整个事务，不假定单条语句失败已撤销此前写入。死锁或锁等待超时后，仅在完整回滚且操作可安全重试时有限重试整个事务；提交结果不明时先按幂等标识核对结果。参见[示例](references/mysql-design-examples.md#失败处理)。
+- **Failure handling**: on required-write errors or unmet business conditions, stop later writes and roll back the entire transaction. Do not assume a failed statement undoes earlier writes. After deadlocks or lock timeouts, retry the whole transaction only finitely after full rollback and only when safe. For uncertain commits, verify using idempotency identifiers first. See [examples](references/mysql-design-examples.md#failure-handling).
 
-- **外部操作边界**：本地事务不保障外部服务调用或消息发送共同提交、回滚。参见[示例](references/mysql-design-examples.md#外部操作边界)。
+- **External operations**: local transactions do not atomically commit/roll back external calls or message sending. See [examples](references/mysql-design-examples.md#external-operations).
 
-### 并发控制
+### Concurrency control
 
-- **业务条件更新**：优先在写语句中用业务字段校验写入时的前置条件；依赖事务外读取值计算新值时，须同时校验相关原值或有效版本标识，防止覆盖并发修改；可用单条条件更新完成时，不额外开启显式事务。参见[示例](references/mysql-design-examples.md#业务条件更新)。
+- **Business-conditional updates**: prefer write-time business-field predicates. When new values depend on reads outside the transaction, check relevant old values or a valid version identifier to avoid overwriting concurrent changes. Do not add explicit transactions when one conditional statement suffices. See [examples](references/mysql-design-examples.md#business-conditional-updates).
 
-- **更新时间校验**：无合适的业务字段时，可用 `updated_at` 匹配读取到的原值，前提是相关修改均会改变该值，且旧值在并发校验期间不会被复用；读写、序列化及参数绑定须完整保留毫秒。无法保障此前提时，采用不复用的版本标识等并发控制方案。参见[示例](references/mysql-design-examples.md#更新时间校验)。
+- **Timestamp checks**: if suitable business fields are absent, match the original `updated_at` only if every relevant modification changes it and the old value cannot be reused during validation. Preserve milliseconds in reads, writes, serialization, and binding. Otherwise use a non-reused version identifier or another concurrency mechanism. See [examples](references/mysql-design-examples.md#timestamp-checks).
 
-- **引用完整性**：通过条件更新、唯一约束及必要的事务维护引用完整性，处理新增或变更引用与目标删除或失效的并发竞争。参见[示例](references/mysql-design-examples.md#客户引用的并发维护)。
+- **Referential integrity**: use conditional updates, uniqueness, and necessary transactions to coordinate reference creation/change against target deletion/invalidation. See [examples](references/mysql-design-examples.md#concurrent-customer-reference-maintenance).
 
-- **更新结果判断**：按驱动的影响行数语义核对条件更新结果；条件未满足时不得判定成功。参见[示例](references/mysql-design-examples.md#更新结果判断)。
+- **Update results**: interpret conditional-update counts using the driver's affected-row semantics. An unmet predicate is not success. See [examples](references/mysql-design-examples.md#update-results).
 
-- **写入顺序**：竞争相同资源的写事务采用一致的表及记录写入顺序；不以 SQL 书写顺序推定实际加锁顺序。参见[示例](references/mysql-design-examples.md#写入顺序)。
+- **Write order**: competing transactions should use consistent table/record order. SQL text order does not establish actual lock order. See [examples](references/mysql-design-examples.md#write-order).
 
-## 数据库安全
+## Database security
 
-- 应用传入的数据值使用参数绑定，不直接拼入 SQL。
+- Bind application data as parameters rather than concatenating it into SQL.
 
-- 动态表名、列名及排序方向通过代码中的白名单映射为 SQL 结构，不用值参数占位符替代。
+- Map dynamic table/column names and sort directions through code allowlists into SQL structure; value placeholders cannot replace them.
 
-## 性能优化
+## Performance optimization
 
-- **请求往返**：在保证正确性和整体性能的前提下，减少完成一次业务操作所需的数据库请求次数。
+- **Request round trips**: reduce database requests per business operation while preserving correctness and overall performance.
 
-### 索引优化
+### Index optimization
 
-- **索引复用与变更**：按主要查询集合复用索引，已有访问路径满足性能要求时，不因新增 SQL 或条件增加索引；合并或替换前检查其他查询及唯一约束。参见[示例](references/mysql-design-examples.md#索引复用与变更)。
+- **Index reuse and changes**: reuse indexes across primary queries. Do not add indexes merely for new SQL/predicates when existing paths meet performance needs. Check other queries and unique constraints before merging or replacing. See [examples](references/mysql-design-examples.md#index-reuse-and-changes).
 
-- **低区分度字段**：不因不同值数量少而排除索引；结合目标值分布、联合过滤、排序和覆盖收益，以及回表与写入维护成本决定。参见[示例](references/mysql-design-examples.md#低区分度字段)。
+- **Low-cardinality fields**: do not reject indexes solely for few distinct values. Consider target distribution, combined filters, ordering, covering benefits, table lookups, and write costs. See [examples](references/mysql-design-examples.md#low-cardinality-fields).
 
-- **前缀索引**：按实际数据选择字符串索引的前缀长度；前缀唯一索引可能拒绝完整值不同但前缀相同的记录，不能替代完整值唯一性约束。参见[示例](references/mysql-design-examples.md#前缀索引)。
+- **Prefix indexes**: select string-prefix lengths from actual data. Unique prefix indexes may reject distinct full values sharing a prefix and cannot replace full-value uniqueness. See [examples](references/mysql-design-examples.md#prefix-indexes).
 
-- **联合索引**：列顺序兼顾过滤、左前缀复用及排序、分组；等值过滤列通常置于范围列前，不按区分度高低统一排列。参见[示例](references/mysql-design-examples.md#联合索引)。
+- **Composite indexes**: balance filtering, left-prefix reuse, ordering, and grouping. Equality columns commonly precede range columns; do not universally order by selectivity. See [examples](references/mysql-design-examples.md#composite-indexes).
 
-- **排序成本**：不只凭 `filesort` 判定索引设计有误；比较排序开销、扫描量及新增索引的维护成本。参见[示例](references/mysql-design-examples.md#排序成本)。
+- **Sort cost**: `filesort` alone does not mean a bad index. Compare sorting, scans, and maintenance costs of added indexes. See [examples](references/mysql-design-examples.md#sort-cost).
 
-- **索引列与表达式**：按日筛选时间列优先直接比较时间范围；确需表达式过滤时，评估匹配表达式的函数索引或生成列索引。参见[示例](references/mysql-design-examples.md#索引列与表达式)。
+- **Indexed columns and expressions**: prefer direct time-range predicates for daily filtering. If expressions are necessary, evaluate matching functional or generated-column indexes. See [examples](references/mysql-design-examples.md#indexed-columns-and-expressions).
 
-- **前导通配符**：普通 B-tree 索引通常不能将前导通配符搜索转为有效范围查找；全文检索或专门搜索方案须符合原查询的匹配语义。参见[示例](references/mysql-design-examples.md#前导通配符)。
+- **Leading wildcards**: ordinary B-tree indexes generally cannot turn leading-wildcard searches into effective range scans. Full-text or dedicated search must retain original match semantics. See [examples](references/mysql-design-examples.md#leading-wildcards).
 
-### 查询优化
+### Query optimization
 
-- **批量查询**：可合并的逐条查询改为联表或批量读取，数据量大时分组；按参数量、返回数据量和实际负载确定分组大小。参见[示例](references/mysql-design-examples.md#批量查询)。
+- **Batch queries**: replace mergeable per-row queries with joins or batches, chunking large sets according to parameter count, result volume, and actual load. See [examples](references/mysql-design-examples.md#batch-queries).
 
-- **数据库侧计算**：可由 SQL 准确表达且整体性能可接受的计算，优先在数据库中完成；更新计算与必要的业务条件校验放入同一写语句。参见[示例](references/mysql-design-examples.md#数据库侧计算)。
+- **Database-side computation**: prefer SQL-expressible computations with acceptable overall performance in the database. Combine update calculations and necessary business predicates in one write. See [examples](references/mysql-design-examples.md#database-side-computation).
 
-- **多路明细关联**：多个一对多关系同时关联时，防止明细组合放大导致重复累计；独立统计按各自粒度聚合后再关联，不用 `SUM(DISTINCT ...)` 修补重复。参见[示例](references/mysql-design-examples.md#多路明细关联)。
+- **Multiple detail joins**: prevent independent one-to-many joins from multiplying rows and double-counting. Aggregate each independent detail at its own grain first; do not patch with `SUM(DISTINCT ...)`. See [examples](references/mysql-design-examples.md#multiple-detail-joins).
 
-- **联表分页**：按主记录分页时，先确定满足完整筛选条件的主记录集合，再读取关联明细；筛选或排序依赖明细时，不得先分页再补条件。参见[示例](references/mysql-design-examples.md#联表分页)。
+- **Pagination with joins**: page primary records by the complete filtering criteria before retrieving details. If filtering/ordering depends on details, do not paginate first and apply criteria afterward. See [examples](references/mysql-design-examples.md#pagination-with-joins).
 
-- **大字段重复传输**：关联结果重复携带同一主记录的大字段时，评估主记录与明细分别批量读取；拆分读取须处理版本一致性，不退化为逐行查询。参见[示例](references/mysql-design-examples.md#大字段重复传输)。
+- **Repeated large-field transfer**: evaluate separate batch reads for primary records and details when joins repeatedly transmit large primary fields. Handle version consistency and avoid per-row queries. See [examples](references/mysql-design-examples.md#repeated-large-field-transfer).
 
-- **大字段延后读取**：筛选、排序和分组不依赖大字段时，评估先处理标识及必要字段，再读取大字段；不得通过遗漏大字段改变原有去重或分组语义。参见[示例](references/mysql-design-examples.md#大字段延后读取)。
+- **Deferred large-field reads**: if filtering, sorting, and grouping do not depend on large fields, evaluate processing IDs/necessary fields first, then fetching large fields. Omitting them must not change deduplication/grouping semantics. See [examples](references/mysql-design-examples.md#deferred-large-field-reads).
 
-### 写入优化
+### Write optimization
 
-- **批量写入**：可合并的插入优先使用多行 `INSERT ... VALUES`，同类更新评估集合更新；按字段大小及实际负载验证批量大小。拆分事务仅限可独立提交的批次，不改变必须共同成功的范围。参见[批量写入](references/mysql-design-examples.md#批量写入)及[原子更新](references/mysql-design-examples.md#原子自增减少往返并避免丢失更新)。
+- **Batch writes**: prefer multi-row `INSERT ... VALUES` for mergeable inserts; evaluate set-based updates. Validate batch sizes against field sizes and load. Split transactions only for independently committable batches, preserving writes that must succeed together. See [batch writes](references/mysql-design-examples.md#batch-writes) and [atomic updates](references/mysql-design-examples.md#atomic-increment-fewer-round-trips-without-lost-updates).
 
-### 执行计划与性能验证
+### Execution plans and performance verification
 
-#### 适用范围与判定
+#### Applicability and classification
 
-- 仅对无法凭表结构、索引和 SQL 可靠判断主要执行成本的复杂 SQL 开展专项性能验证；非复杂 SQL 不额外要求执行计划分析、构造性能数据或压测。
+- Perform dedicated performance verification only for complex SQL whose main costs cannot reliably be inferred from schema, indexes, and SQL. Do not additionally require plans, performance datasets, or load tests for non-complex SQL.
 
-- 静态分析无法确定以下成本时，判为复杂 SQL：数据分布及参数影响的扫描、回表和索引选择；关联、子查询、聚合或去重产生的中间结果及执行次数；实际数据量或字段大小决定的排序、传输及批量写入成本。
+- Classify as complex when static analysis cannot establish scans, table lookups, or index choices affected by distribution/parameters; intermediate results or execution counts from joins/subqueries/aggregation/deduplication; or sorting, transfer, and batch-write costs determined by actual scale/field sizes.
 
-- 不单凭语句长度、联表数量或返回行数判定复杂性。参见[判定示例](references/mysql-design-examples.md#复杂-sql-判定)。
+- Do not classify by statement length, join count, or returned rows alone. See [classification examples](references/mysql-design-examples.md#classifying-complex-sql).
 
-#### 验证方法
+#### Verification method
 
-- 使用目标版本及存储引擎的真实 MySQL，数据须覆盖导致该语句成本不确定的规模、分布、参数及字段大小，不以空库或少量样例代替。
+- Use real MySQL with the target version/engine and data covering the scale, distribution, parameters, and field sizes causing uncertainty, not empty databases or a few sample rows.
 
-- 用 `EXPLAIN` 查看访问路径，按需用 `EXPLAIN ANALYZE` 核对实际行数、循环次数和耗时；后者会实际执行语句，执行前评估成本及副作用。参见 [EXPLAIN 官方说明](https://dev.mysql.com/doc/refman/8.4/en/explain.html)。
+- Use `EXPLAIN` for paths and `EXPLAIN ANALYZE` as needed for actual rows, loops, and time. The latter executes statements: assess costs and effects first. See [official EXPLAIN documentation](https://dev.mysql.com/doc/refman/8.4/en/explain.html).
 
-- 测量实际请求次数和完整业务路径耗时，不以首行返回时间或单条 SQL 时间替代完整传输、读取及应用计算成本；仅关键并发路径补充负载验证。参见[验证过程示例](references/mysql-design-examples.md#依赖真实数据的验证过程)。
+- Measure actual requests and complete business-path latency, including transfer, reading, and application computation, not just first-row or individual-query time. Add load validation only for key concurrent paths. See [verification example](references/mysql-design-examples.md#verification-using-actual-data).
 
-- 说明验证条件、结果及未验证范围，不把使用索引、静态计划分析或小规模测试表述为实际负载验证通过。
+- Report conditions, results, and unverified scope. Index use, static plans, or small tests are not evidence of passing actual-load verification.

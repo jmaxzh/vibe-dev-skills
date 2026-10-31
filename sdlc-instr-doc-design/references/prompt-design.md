@@ -1,66 +1,66 @@
-# 提示词设计指导原则
+# Prompt Design Guidelines
 
-设计、撰写、修改或审查约束模型行为的指令、提示词、技能及文档中的模型执行规则时，使用以下原则，并遵循主技能的[共同表达规则](../SKILL.md#共同表达规则)。
+When designing, writing, modifying, or reviewing instructions, prompts, skills, or execution rules that constrain model behavior, use these principles together with the main skill's [shared expression rules](../SKILL.md#shared-expression-rules).
 
-## 一、通用原则
+## General principles
 
-1. 最小充分：仅保留对任务执行或结果有实际作用的指令，避免重复、套话及无必要的约束。
-2. 明确可执行：使用简洁、明确的指令句；保留理解任务所必需的对象、条件、操作及结果要求。
-3. 避免重复通识：不重复说明模型已具备的通用知识和基础能力，但保留任务所需的具体约束。
-4. 按需设计：通用维度始终适用；场景维度仅在符合启用条件且确有必要时使用。
-5. 边界清晰：区分指令与数据；对证据范围、权限、不确定性等仅设置任务所需的边界。
-6. 结果导向：优先规定预期结果和必要约束，不无故限制模型的处理步骤。
+1. Minimum sufficient instructions: retain only instructions affecting execution or results; avoid repetition, filler, and unnecessary constraints.
+2. Explicit and actionable: use concise, clear imperatives; retain actors, conditions, operations, and outcomes necessary to understand the task.
+3. Avoid repeating general knowledge: do not restate basic knowledge or capabilities the model already has, but retain task-specific constraints.
+4. Load by need: general dimensions always apply; scenario-specific dimensions apply only when their activation conditions hold.
+5. Clear boundaries: separate instructions from data; constrain evidence, permissions, and uncertainty only as required by the task.
+6. Outcome-oriented: specify necessary results and constraints first; do not restrict processing steps without reason.
 
-## 二、通用设计维度
+## General design dimensions
 
-这些维度适用于所有提示词，用于检查要求是否充分，不要求分别编写对应指令；任务上下文或已有指令已明确的要求无需重复补充。
+These dimensions apply to all prompts and help assess sufficiency. They do not require separate instructions for every dimension; do not add requirements already explicit in the task or context.
 
-| 设计维度 | 推荐方法 | 不推荐做法 | 原因与适用条件 |
+| Dimension | Recommended | Avoid | Reason and applicability |
 | --- | --- | --- | --- |
-| 任务定义 | 明确任务目标、处理对象和预期结果；必要时规定完成条件 | 目标笼统、对象不明，或加入无关背景 | 确保任务及完成要求可以被准确理解 |
-| 指令明确性 | 使用简洁、可执行的指令；仅保留必要的主体、条件、对象和结果要求 | 模糊表达、缺少关键条件或使用无具体操作意义的要求 | 减少歧义与不必要的推断 |
-| 指令长度 | 使用最小充分指令，保留实际影响任务执行或结果的内容 | 重复同义规则、重复说明模型已具备的通用知识与基础能力、堆叠泛泛告诫和套话 | 减少冗余及过度约束，同时保留任务所需的具体规则 |
-| 输入组织 | 明确区分任务指令与待处理内容；必要时使用字段或分隔符 | 混淆指令和数据，或对简单输入强制采用复杂格式 | 保证处理对象清晰，避免无意义的结构化 |
-| 输出约束 | 明确结果必须包含的内容；仅在需要时规定格式、长度及结构 | 缺少影响结果使用的输出要求，或增加不影响实际使用的格式限制 | 保证结果满足任务需求，避免无必要的输出限制 |
+| Task definition | Specify goals, objects, outcomes, and completion criteria as needed | Vague goals, unclear objects, unrelated background | Makes task and completion requirements understandable |
+| Instruction clarity | Use concise, executable instructions with necessary actors, conditions, operations, and results | Ambiguity, missing conditions, non-operational wording | Reduces ambiguity and unnecessary inference |
+| Instruction length | Use minimum sufficient instructions; retain conditions affecting execution or outcomes | Synonymous repetition, basic knowledge, generic admonitions, filler | Reduces redundancy and overconstraint without losing specific rules |
+| Input organization | Separate instructions and content; use fields or separators when necessary | Mixing instructions with data or forcing structure onto simple input | Clarifies the processing object without meaningless structure |
+| Output constraints | Specify required content and necessary format, length, or structure | Missing usage-critical requirements or unnecessary formatting constraints | Ensures usable results without gratuitous restrictions |
 
-## 三、分场景启用的设计维度
+## Scenario-specific dimensions
 
-仅在启用场景成立，且现有提示词无法充分表达相应要求时，增加必要指令。
+Add instructions for these dimensions only when the scenario applies and existing wording does not express the requirement sufficiently.
 
-| 设计维度 | 启用场景 | 推荐方法 | 不推荐做法 |
+| Dimension | Activation scenario | Recommended | Avoid |
 | --- | --- | --- | --- |
-| 任务分解 | 任务存在需要独立处理的阶段或明确依赖关系 | 拆分必要步骤，明确各阶段的目标和结果 | 无差别强制分步处理 |
-| 指令层级 | 存在不同来源、优先级或用途的指令和资料 | 区分规则、任务与数据，明确适用边界 | 混淆指令与资料，或让低优先级内容覆盖高优先级规则 |
-| 推理引导 | 任务要求特定分析方法、论证框架或验证过程 | 规定必要的分析角度、方法和可验证结果 | 普遍要求逐步思考或展示完整内部思维链 |
-| 少样本示例（Few-shot） | 文字规则不足以明确分类边界、判断标准或输出形式 | 提供少量具有代表性且与规则一致的正例、反例或边界例；明确示例用于说明的要求 | 堆叠重复、无关或相互矛盾的示例，或让示例中的偶然细节成为额外约束 |
-| 证据使用 | 任务需要依据指定资料作答、核查事实或提供引用 | 明确证据范围、引用要求及来源冲突的处理方式 | 无证据补充事实、伪造引用或忽略来源冲突 |
-| 异常与不确定性处理 | 可能出现影响结果的信息缺失、输入无效或来源冲突 | 规定必要的异常处理方式及无法确定时的回应 | 无条件要求确定答案，或罗列缺乏实际依据的异常规则 |
-| 工具使用指令 | 任务允许或需要使用外部工具 | 明确工具调用条件、用途、结果使用规则及必要确认条件 | 虚构工具执行结果、猜测必要参数或扩大操作权限 |
-| 模板化与参数化 | 提示词需要复用、批量处理或动态填充内容 | 使用含义明确的变量，区分固定指令与可变数据 | 使用含义不明的占位符或随意拼接指令与数据 |
-| 角色与受众设定 | 专业职责、目标受众或表达语域会实质影响结果 | 明确必要的角色、职责、受众及表达要求 | 无实际作用的专家角色扮演或冗长身份描述 |
+| Task decomposition | Distinct stages or clear dependencies | Split necessary steps with goals and outcomes | Requiring stepwise execution indiscriminately |
+| Instruction hierarchy | Different sources, priorities, or uses of instructions and materials | Clarify roles, priority, and applicability | Mixing instructions with data or letting lower-priority content override higher-priority rules |
+| Reasoning guidance | A particular analytical method, reasoning framework, or verification process is required | Specify necessary analytical perspectives, methods, and verifiable outcomes | Universally requiring step-by-step reasoning or full internal chains of thought |
+| Few-shot examples | Rules alone do not clarify classification boundaries, criteria, or output form | Use a few representative positive, negative, or boundary examples consistent with rules; explain their purpose | Repeated, irrelevant, contradictory examples, or incidental details becoming constraints |
+| Evidence use | Designated sources, factual checks, or citations are required | Specify evidence scope, citation requirements, and source-conflict handling | Unsupported facts, fabricated evidence, or ignored conflicts |
+| Exceptions and uncertainty | Missing information, invalid input, or source conflicts may affect results | Specify necessary exceptions, uncertainty responses, and requirements | Unconditional certainty or hypothetical exception rules without evidence |
+| Tool-use instructions | External tools are allowed or required | Specify activation, purpose, use of results, and necessary confirmation | Fabricated results, guessed required parameters, or expanded permissions |
+| Templates and parameters | Reuse, batch processing, or dynamic filling | Use meaningful variables; separate fixed instructions and variable data | Ambiguous placeholders or ad hoc data concatenation |
+| Roles and audience | Professional responsibilities, audience, or register affect outcomes | Specify necessary responsibilities, audience, and expression requirements | Ineffective expert roleplay or lengthy identity descriptions |
 
-## 四、指令增删与维护原则
+## Instruction maintenance
 
-以下原则用于新增、修改、压缩或删除提示词内容。
+Apply these principles when adding, revising, compressing, or removing prompt content.
 
-| 维护操作 | 指导原则 |
+| Operation | Principle |
 | --- | --- |
-| 新增指令 | 仅在存在明确任务需求、可识别风险或实际问题时添加；优先补充缺失的条件与约束 |
-| 修改指令 | 优先消除歧义、矛盾和执行边界不清的问题，不无故扩大约束范围 |
-| 压缩指令 | 删除重复、套话、泛泛告诫及无实际作用的通识性说明，保留必要信息 |
-| 删除指令 | 删除不影响任务执行及预期结果的内容；不得仅因模型已掌握相关知识而删除必要约束 |
-| 合并指令 | 合并适用条件和预期行为一致的重复要求；保留具有不同条件、对象或作用的独立规则 |
-| 保留指令 | 对结果正确性、证据边界、操作权限或必要异常处理具有明确作用的指令应予保留 |
+| Add | Require an explicit task need, identifiable risk, or actual problem; prioritize missing conditions and boundaries |
+| Revise | Remove ambiguity, contradiction, and unclear execution boundaries first; do not expand scope gratuitously |
+| Compress | Remove repetition, filler, and basic-knowledge reminders; retain necessary information |
+| Remove | Remove instructions with no effect on execution or outcomes; do not remove necessary constraints merely because the model knows them |
+| Merge | Merge rules with the same applicability and expected behavior; retain independent rules with distinct conditions, objects, or effects |
+| Retain | Keep instructions materially affecting correctness, evidence boundaries, permissions, or necessary exception handling |
 
-## 五、最终检查
+## Final checklist
 
-- 任务目标、处理对象和预期结果是否明确？
-- 是否存在模糊、重复、空泛或无必要的指令？
-- 是否重复强调模型已具备的通用知识或基础能力？
-- 是否保留了任务必需的条件、约束及行为边界？
-- 是否只启用了实际需要的场景维度？
-- 指令、数据及示例的边界是否清楚？
-- 示例是否与规则一致，是否引入了任务未要求的约束？
-- 是否存在不必要的步骤、格式或角色限制？
+- Are the task goals, objects, and outcomes clear?
+- Are there ambiguous, repetitive, generic, or unnecessary instructions?
+- Is basic knowledge or capability unnecessarily repeated?
+- Are necessary conditions, constraints, and behavioral boundaries retained?
+- Are scenario-specific dimensions included only when needed?
+- Are instructions, data, and examples clearly separated?
+- Are examples representative, consistent, and free of accidental constraints?
+- Are there unnecessary processing steps, formats, structures, or roles?
 
-核心原则：以最小充分指令为基础，明确任务与必要边界，按实际场景补充要求，不重复模型通用能力，不为形式完整而增加指令。
+Core principle: use minimum sufficient instructions, explicit goals and necessary boundaries, and scenario-specific additions only as needed. Do not repeat general knowledge or add instructions for formal completeness.

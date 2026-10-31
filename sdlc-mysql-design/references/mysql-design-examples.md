@@ -1,308 +1,308 @@
-# MySQL 数据表与 SQL 设计示例
+# MySQL Table and SQL Design Examples
 
-本文按主题解释[主技能](../SKILL.md)的规则，示例中的业务假设不自动成为其他场景的约束。SQL 使用 InnoDB；`:name` 是驱动参数绑定的示意记法，执行时按驱动支持的形式绑定。片段仅列出相关字段，省略无关必填字段，不构成可直接执行的完整建表脚本。
+This reference explains the [main skill](../SKILL.md) by topic. Business assumptions in examples do not become constraints elsewhere. SQL uses InnoDB; `:name` illustrates driver-bound parameters, which must use the actual driver's supported syntax. Fragments show relevant fields only, omitting unrelated required fields, and are not complete executable table-creation scripts.
 
-## 数据建模
+## Data modeling
 
-### 实体、关系与字段归属
+### Entities, relationships, and field ownership
 
-对应规则：[实体、关系与字段归属](../SKILL.md#实体关系与字段归属)。各组名称与主文档的规则条目一致。
+Corresponding rules: [entities, relationships, and field ownership](../SKILL.md#entities-relationships-and-field-ownership). Group names match the main document's rule entries.
 
-#### 记录粒度
+#### Row grain
 
-##### 客户、订单、订单明细与支付尝试
+##### Customers, orders, items, and payment attempts
 
-假设每笔订单属于一个客户，订单允许支付重试。
+Assume each order belongs to one customer and allows payment retries.
 
-| 表 | 一行代表什么 | 职责及关系 |
+| Table | One row represents | Responsibility and relationships |
 | --- | --- | --- |
-| `customer` | 一个客户 | 保存客户当前资料；一个客户可有零到多笔订单 |
-| `sales_order` | 一笔订单 | 保存订单整体信息及该订单确认的收货信息；通过 `customer_id` 引用客户 |
-| `order_item` | 一笔订单中的一个明细项 | 保存购买数量、成交单价及下单时的商品名称；通过 `order_id` 归属订单，不默认同一商品在订单中只能出现一次 |
-| `payment_attempt` | 一次支付尝试 | 保存支付请求及结果；通过 `order_id` 归属订单，一笔订单可有零到多次尝试 |
+| `customer` | One customer | Current customer information; a customer can have zero or more orders |
+| `sales_order` | One order | Order-wide information and confirmed shipping details; references `customer_id` |
+| `order_item` | One item in an order | Quantity, transaction unit price, and product name at order time; belongs through `order_id`; the same product is not assumed unique within an order |
+| `payment_attempt` | One payment attempt | Request and outcome; belongs through `order_id`; an order can have zero or more attempts |
 
-同一笔订单有两条明细、三次支付尝试时，分别保存一条订单、两条明细和三条支付尝试记录；不要在订单表中混入“一行代表一次支付尝试”的记录。
+An order with two items and three payment attempts has one order, two item rows, and three attempt rows. Do not mix payment-attempt-grain records into the order table.
 
-#### 关联与唯一性
+#### Relationships and uniqueness
 
-##### 关系两侧的关联数量与重复规则
+##### Cardinality and repetition on both sides
 
-假设每笔订单必须属于一个客户，客户可以尚未下单；订单草稿允许没有明细，提交订单时至少需要一条明细：
+Assume each order requires one customer, customers need not have orders, drafts may lack items, and submitted orders require at least one item:
 
-| 关系 | 从一侧看另一侧 | 从另一侧看这一侧 | 重复规则 |
+| Relationship | From one side | From the other side | Repetition rules |
 | --- | --- | --- | --- |
-| 客户与订单 | 一个客户有零到多笔订单 | 一笔订单恰好属于一个客户 | 同一客户可以有多笔不同订单 |
-| 订单与明细 | 草稿订单有零到多条明细，已提交订单至少有一条 | 一条明细恰好属于一笔订单 | 同一商品可以出现多次，以明细序号区分 |
-| 订单与支付尝试 | 一笔订单有零到多次支付尝试 | 一次支付尝试恰好属于一笔订单 | 重试生成新的尝试记录，同一次请求重放按幂等规则处理 |
+| Customer/order | Customer has zero or more orders | Order belongs to exactly one customer | Multiple distinct orders per customer allowed |
+| Order/item | Draft has zero or more items; submitted order at least one | Item belongs to exactly one order | Same product may recur, distinguished by item sequence |
+| Order/payment attempt | Order has zero or more attempts | Attempt belongs to exactly one order | Retry creates a new attempt; replay of the same request follows idempotency rules |
 
-仅说“客户和订单是一对多”不能说明订单能否缺少客户，也不能说明客户是否必须下单。分别定义两侧数量；数量随业务状态变化时，明确对应条件。
+Calling customer/order one-to-many does not establish whether orders can lack customers or customers must order. Define both cardinalities and conditions when they change with business state.
 
-##### 一对多与一对一的引用和约束
+##### References and constraints for one-to-many and one-to-one
 
-一对多示例：在 `sales_order` 中保存 `customer_id`，而不是在客户表中保存订单编号列表。订单必须属于客户时，将 `customer_id` 设为 `NOT NULL`；同一客户可以有多笔订单，因此不对该列单独设置唯一约束。
+One-to-many: store `customer_id` in `sales_order`, not an order-ID list in customers. Make it `NOT NULL` if customer ownership is required, but not individually unique because a customer can have multiple orders.
 
-一对一示例：假设每个客户最多有一份扩展资料，一份扩展资料只属于一个客户。可采用以下任一结构：
+One-to-one: assume at most one profile per customer and one owner per profile. Either design works:
 
-| 结构 | 客户扩展资料表的约束 | 能限制什么 |
+| Structure | Profile-table constraints | Enforces |
 | --- | --- | --- |
-| 独立主键 | `id` 为主键，`customer_id` 非空且唯一 | 同一客户最多有一份扩展资料 |
-| 以引用列作为主键 | `customer_id` 为主键 | 同一客户最多有一份扩展资料 |
+| Separate primary key | `id` primary key; `customer_id` nonnull and unique | At most one profile per customer |
+| Reference as primary key | `customer_id` primary key | At most one profile per customer |
 
-这两种结构都允许客户尚无扩展资料，也不能单独保证客户记录存在。如果业务要求创建客户时必须同时创建扩展资料，由业务写入流程维护存在性，必要写入共同提交；不能仅凭唯一约束或 `NOT NULL` 判定双方记录一定存在。
+Both permit customers without profiles and neither alone proves customer existence. If customer creation must also create a profile, enforce existence through writes that commit together. Uniqueness or `NOT NULL` alone does not prove both records exist.
 
-##### 关系属性与唯一性范围：学生选课
+##### Relationship attributes and uniqueness scope: enrollment
 
-假设一个学生可以选择多门课程，一门课程可以有多个学生；同一学生每学期对同一门课程只能选课一次：
+Assume students can take multiple courses and courses have multiple students; a student can enroll in the same course only once per semester:
 
-| 学生编号 | 课程编号 | 学期 | 选课时间 | 成绩 |
+| Student ID | Course ID | Semester | Enrollment time | Grade |
 | --- | --- | --- | --- | --- |
-| S01 | C01 | 2026秋季 | 2026-09-01 09:00:00 | 尚未评分 |
-| S02 | C01 | 2026秋季 | 2026-09-01 10:00:00 | 尚未评分 |
-| S01 | C01 | 2027春季 | 2027-02-20 09:00:00 | 尚未评分 |
+| S01 | C01 | Fall 2026 | 2026-09-01 09:00:00 | Not graded |
+| S02 | C01 | Fall 2026 | 2026-09-01 10:00:00 | Not graded |
+| S01 | C01 | Spring 2027 | 2027-02-20 09:00:00 | Not graded |
 
-用选课关联表保存这些记录。选课时间和成绩描述某学生在某学期对某课程的选课关系，不属于学生或课程本身。
+Store these in an enrollment junction table. Enrollment time and grade describe a student's course relationship in a semester, not the student or course itself.
 
-对“学生编号＋课程编号＋学期”设置唯一约束，参与唯一性判断的列均为必填。只约束学生和课程会误拒绝下一学期的选课；只增加独立主键则不能防止同一学期重复选课。
+Enforce uniqueness on student ID + course ID + semester, all required. Student/course alone wrongly rejects later-semester enrollment; a separate primary key alone does not prevent same-semester duplicates.
 
-##### 多次参与：员工多次加入同一项目
+##### Repeated participation: employees rejoining projects
 
-假设员工退出项目后可以再次加入，每次参与都需要保留记录：
+Assume employees may leave and rejoin a project and each participation must be retained:
 
-| 参与记录编号 | 员工编号 | 项目编号 | 开始时间 | 结束时间 |
+| Participation ID | Employee ID | Project ID | Start | End |
 | --- | --- | --- | --- | --- |
 | R001 | E01 | P01 | 2026-01-01 | 2026-03-01 |
-| R002 | E01 | P01 | 2026-06-01 | NULL（尚未结束） |
+| R002 | E01 | P01 | 2026-06-01 | NULL (ongoing) |
 
-两条记录中的“员工编号＋项目编号”相同，但表示两次不同的参与经历。不能对这一组合设置唯一约束，否则第二次加入会被拒绝。用参与记录编号区分每次参与，退出时结束指定的参与记录。
+Both share employee/project IDs but represent distinct participation. A unique constraint on that pair would reject rejoining. Identify each participation separately and end the specified record on departure.
 
-本例采用左闭右开的有效时间范围：R001 从 1 月 1 日起有效，到 3 月 1 日起失效；R002 从 6 月 1 日起有效，尚无结束时间。时间范围用于回答员工在某个日期是否属于项目。
+Use half-open validity intervals: R001 is valid from January 1 until March 1, exclusive; R002 starts June 1 without an end. These intervals answer whether an employee belonged to a project on a date.
 
-另行明确同一员工在同一项目的参与时间是否允许重叠。参与记录编号只能区分记录，不能单独阻止重复创建同一次参与或禁止时间重叠；需要这些限制时，按业务唯一性及主文档的并发控制要求保障。
+Separately define whether intervals for the same employee/project may overlap. Participation IDs alone prevent neither duplicate creation of one participation nor overlaps; enforce required limits through business uniqueness and main-document concurrency rules.
 
-##### 多次业务事件：用户多次给同一篇文章打赏
+##### Repeated business events: tipping an article multiple times
 
-假设用户允许对同一篇文章打赏多次：
+Assume a user may tip the same article repeatedly:
 
-| 打赏订单编号 | 用户编号 | 文章编号 | 金额（人民币元） | 发生时间 |
+| Tip order ID | User ID | Article ID | Amount (CNY yuan) | Event time |
 | --- | --- | --- | --- | --- |
 | T001 | U01 | A01 | 5.00 | 2026-10-16 10:00:00 |
 | T002 | U01 | A01 | 10.00 | 2026-10-16 11:00:00 |
 
-“用户编号＋文章编号”相同，但两条记录表示两次独立的打赏。用打赏订单编号区分业务事件，记录发生时间；通常无需定义关系有效期。请求重试不能当作新的打赏；请求标识的唯一性要求见[键与约束](../SKILL.md#键与约束)。
+Both share user/article IDs but are separate tips. Identify events by tip order IDs and record event time; a relationship validity interval is usually unnecessary. Retries are not new tips; see [keys and constraints](../SKILL.md#keys-and-constraints) for request-identifier uniqueness.
 
-##### 多次尝试：学生多次参加同一门课程的考试
+##### Repeated attempts: retaking a course exam
 
-假设同一学生可以多次参加同一课程的考试。仅凭“学生编号＋课程编号”无法区分各次考试，可按业务规则采用考试记录编号，或加入考试场次、尝试次数等维度。
+Assume a student may take a course exam repeatedly. Student/course IDs alone cannot distinguish attempts; use an exam-record ID or exam session/attempt number according to business rules.
 
-例如，同一学生对同一课程的尝试次数分别为 1、2，可对“学生编号＋课程编号＋尝试次数”设置唯一约束，避免重复记录同一次尝试。考试发生时间用于记录事件，通常无需设置关系有效期。
+For attempts 1 and 2 in the same course, uniqueness on student ID + course ID + attempt number prevents duplicate recording. Exam time records the event; relationship validity intervals are usually unnecessary.
 
-##### 不同角色：用户以不同角色加入同一组织
+##### Distinct roles: a user joining an organization in multiple roles
 
-假设一个用户可以同时具有同一组织内的多个角色：
+Assume users may hold multiple roles in the same organization simultaneously:
 
-| 用户编号 | 组织编号 | 角色 |
+| User ID | Organization ID | Role |
 | --- | --- | --- |
-| U01 | G01 | 管理员 |
-| U01 | G01 | 审核员 |
+| U01 | G01 | Administrator |
+| U01 | G01 | Reviewer |
 
-两条记录中的用户与组织相同，但角色不同。如果每个角色只维护一条当前授权记录，可对“用户编号＋组织编号＋角色”设置唯一约束，而不是只约束用户与组织。
+Both share user/organization but differ in role. If maintaining one current authorization per role, enforce uniqueness on user ID + organization ID + role, not just user/organization.
 
-是否记录授权起止时间、是否保留同一角色的多次授权历史，由业务规则决定；需要保留授权历史时，继续明确各次授权的区分方式。
+Business rules determine authorization intervals and whether repeated grants of the same role are retained. If history is retained, establish how each grant is distinguished.
 
-重复关联可能表示多次参与、多次事件或不同角色。先明确重复的业务含义，再确定记录标识和唯一性范围；仅当业务确有有效期时，定义起止时间及重叠规则。
+Repeated associations can mean repeated participation, events, or roles. Establish meaning before identity and uniqueness scope. Define start/end and overlap rules only when validity intervals are actual business concepts.
 
-#### 字段归属
+#### Field ownership
 
-客户当前名称属于客户，商品当前售价属于商品，某次购买的成交单价和数量属于订单明细。以下示例按字段的业务含义及依赖关系判断归属。
+A customer's current name belongs to the customer, a product's current price to the product, and transaction price/quantity to the order item. The following examples derive ownership from meaning and dependencies.
 
-##### 字段归属与重复维护：客户当前名称
+##### Field ownership and duplicate maintenance: current customer name
 
-假设客户资料只存放在订单表中，每笔订单都保存并维护客户当前名称：
+Suppose customer information exists only in orders, each maintaining the current customer name:
 
-| 订单编号 | 客户编号 | 客户当前名称 |
+| Order ID | Customer ID | Current customer name |
 | --- | --- | --- |
-| O001 | C01 | 张三 |
-| O002 | C01 | 张三 |
+| O001 | C01 | Zhang San |
+| O002 | C01 | Zhang San |
 
-在同一时点，客户编号 C01 决定其当前名称。这里的“依赖”由业务规则决定，不表示名称永远不能修改。
+At a given time, C01 determines its current name. This dependency is a business rule, not a prohibition on renaming.
 
-这种设计重复维护同一事实，会产生以下问题：
+Duplicating this fact causes:
 
-- 插入异常：客户尚未下单时，没有合适的位置保存客户资料。
-- 更新异常：客户改名时需要修改多笔订单，遗漏记录就会导致名称不一致。
-- 删除异常：删除客户的最后一笔订单时，可能同时丢失客户资料。
+- Insert anomaly: no suitable place for customer information before their first order.
+- Update anomaly: renaming requires changing multiple orders; omissions cause inconsistent names.
+- Delete anomaly: deleting the last order may lose the customer information too.
 
-将客户资料与订单分开保存：
+Store customers and orders separately:
 
-| 表 | 示例字段 | 维护职责 |
+| Table | Example fields | Maintenance responsibility |
 | --- | --- | --- |
-| `customer` | 客户编号、当前名称 | 维护客户当前名称 |
-| `sales_order` | 订单编号、客户编号 | 保存订单，通过客户编号引用客户 |
+| `customer` | Customer ID, current name | Maintain current customer name |
+| `sales_order` | Order ID, customer ID | Store order and reference customer |
 
-客户改名时，只修改客户表中对应记录。即使已经建立客户表，也要检查订单表是否仍在重复维护客户当前名称；仅识别出实体与关系，并不能保证字段归属合理。
+Rename only the customer row. Even after creating a customer table, check whether orders still redundantly maintain its current name; identifying entities and relationships alone does not ensure proper field ownership.
 
-##### 历史快照：成交单价与下单时的商品名称
+##### Historical snapshots: transaction price and product name at order time
 
-假设商品下单时名称为“白色短袖”，成交单价为 80 元，之后商品更名为“白色棉质短袖”，当前售价调整为 90 元。
+Assume a product is named "White short-sleeve shirt" at purchase for 80 yuan, later renamed "White cotton short-sleeve shirt" with current price 90 yuan.
 
-由商品表维护当前名称和售价；订单明细保存下单时的商品名称和成交单价，仍为“白色短袖”和 80 元。后两者描述该次购买，属于历史快照，不随商品当前资料同步修改。
+Products maintain current name/price; order items retain "White short-sleeve shirt" and 80 yuan. These describe the purchase and are historical snapshots, not synchronized current information.
 
-##### 部分依赖：订单明细中的订单日期
+##### Partial dependency: order date in items
 
-候选键是能够唯一标识记录、且不能再删减字段的字段集合；从候选键中选择一个作为主键。非键属性指不属于任何候选键的属性。
+A candidate key is a minimal set of fields uniquely identifying a record; select one as primary key. Non-key attributes belong to no candidate key.
 
-假设订单明细由“订单编号＋明细序号”唯一标识，订单日期却保存在每条明细中：
+Assume items are uniquely identified by order ID + item sequence, but each stores the order date:
 
-| 订单编号 | 明细序号 | 购买数量 | 订单日期 |
+| Order ID | Item sequence | Quantity | Order date |
 | --- | --- | --- | --- |
 | O001 | 1 | 2 | 2026-10-16 |
 | O001 | 2 | 5 | 2026-10-16 |
 
-购买数量由具体明细决定，需要完整的“订单编号＋明细序号”；订单日期只由订单编号决定，与明细序号无关。这是非键属性对组合候选键的部分依赖。
+Quantity depends on the complete order/item key, but order date depends only on order ID. This is a non-key attribute's partial dependency on a composite candidate key.
 
-将订单日期放入订单表，在订单明细表中保留购买数量，避免同一订单日期在多条明细中重复维护。
+Put order date in the order table and keep quantity in items, avoiding repeated maintenance across items.
 
-##### 传递依赖与代理主键：订单中的客户名称
+##### Transitive dependency and surrogate keys: customer names in orders
 
-假设订单表中的订单编号可以确定客户编号，客户编号又可以确定客户当前名称：
+Suppose order ID determines customer ID, which determines current customer name:
 
-`订单编号 → 客户编号 → 客户当前名称`
+`Order ID → Customer ID → Current customer name`
 
-客户当前名称通过客户编号间接依赖订单编号，属于这里需要检查的传递依赖。由客户表维护客户当前名称，订单表保存客户编号即可。
+The name depends indirectly on order ID through customer ID: the transitive dependency to check here. Maintain current names in customers; orders need only customer IDs.
 
-代理主键是额外生成的记录标识，例如自增 `id`。给订单表或订单明细表增加 `id`，只能提供记录标识；客户当前名称或订单日期仍可能重复存储，其原有业务依赖不会消失。继续按业务规则检查字段归属。
+A surrogate key is an additional generated identifier such as auto-increment `id`. Adding it provides identity but does not remove business dependencies or duplicated names/dates. Continue checking ownership by business rules.
 
-#### 引用完整性
+#### Referential integrity
 
-##### 客户存在性、状态与删除处理
+##### Customer existence, state, and deletion
 
-假设订单只能归属处于启用状态的客户，停用客户后保留历史订单，存在订单的客户禁止物理删除：
+Assume orders may belong only to enabled customers; disabling retains historical orders, and customers with orders cannot be physically deleted:
 
-| 操作 | 必须满足的条件 | 预期结果 |
+| Operation | Required condition | Expected outcome |
 | --- | --- | --- |
-| 创建订单或变更订单所属客户 | 目标客户存在且处于启用状态 | 引用不存在或已停用客户时拒绝写入 |
-| 停用客户 | 按业务流程变更客户状态 | 保留既有订单，禁止新订单归属该客户 |
-| 物理删除客户 | 没有引用该客户的订单 | 存在引用时拒绝删除，避免留下无目标的客户编号 |
+| Create or reassign order | Target customer exists and is enabled | Reject missing/disabled customer references |
+| Disable customer | Change state through business flow | Retain existing orders; prohibit new ownership |
+| Physically delete customer | No orders reference it | Reject deletion with references, avoiding dangling IDs |
 
-客户编号非空只能保证填写了值，不能保证对应客户存在或可用。本项目禁止使用外键约束，通过业务写入流程维护上述规则。
+A nonnull customer ID proves only a value was supplied, not existence or availability. Foreign keys are forbidden by this project; enforce rules through business writes.
 
-例如，创建订单前查到客户启用后，另一个操作可能立即停用或删除客户。创建、变更归属、停用和删除流程须按主文档的[并发控制](../SKILL.md#并发控制)要求协调竞争，保证提交后的数据符合规则；不能只在写入前查询一次。
+A customer found enabled can be disabled/deleted before insertion. Coordinate creation, reassignment, disabling, and deletion under [concurrency control](../SKILL.md#concurrency-control) so committed data obeys the rules; one pre-write query is insufficient.
 
-## 表结构设计
+## Table design
 
-### 键与约束
+### Keys and constraints
 
-对应规则：[键与约束](../SKILL.md#键与约束)。
+Corresponding rules: [keys and constraints](../SKILL.md#keys-and-constraints).
 
-#### 应用层校验
+#### Application validation
 
-例如，活动要求 `is_enabled` 为整数 0 或 1，起止时间均有效且 `ends_at > starts_at`。新增、修改及批量写入时，应用在显式事务外校验，失败则拒绝写入。
+For example, require integer `is_enabled` in {0,1}, valid start/end times, and `ends_at > starts_at`. Validate inserts, changes, and batches in the application outside explicit transactions; reject failures.
 
-只修改 `ends_at` 时，也须结合 `starts_at` 校验。依赖已读取数据的校验及库存扣减等操作，按[并发控制](../SKILL.md#并发控制)通过条件更新或乐观锁保障写入时条件仍成立。
+Even an `ends_at`-only change must validate against `starts_at`. Protect read-dependent validation and stock deductions with conditional updates or optimistic locking under [concurrency control](../SKILL.md#concurrency-control), ensuring write-time conditions still hold.
 
-## 事务与一致性
+## Transactions and consistency
 
-以下示例遵循主技能禁止外键和存储过程的项目约定；条件判断和提交、回滚分支由应用控制。事务外查询须确保未被框架事务或 `autocommit = 0` 纳入尚未结束的事务。
+Examples follow the main skill's project bans on foreign keys and stored procedures. Application code controls decisions, commits, and rollbacks. Ensure queries described as outside transactions are not included in unfinished framework transactions or `autocommit = 0` transactions.
 
-### 事务管理
+### Transaction management
 
-对应规则：[事务管理](../SKILL.md#事务管理)。
+Corresponding rules: [transaction management](../SKILL.md#transaction-management).
 
-#### 事务内语句限制
+#### Statements inside transactions
 
-假设创建订单及初始明细前，需要查询商品资料并准备写入参数。
+Assume product information must be queried and parameters prepared before creating an order and initial items.
 
-| 阶段 | 应用执行的操作 |
+| Stage | Application action |
 | --- | --- |
-| 事务外准备 | 查询商品资料，校验请求，准备订单和明细参数 |
-| 开始事务 | 在同一连接执行 `START TRANSACTION` |
-| 必要写入 | 插入订单，再插入初始明细；逐项检查写入结果 |
-| 结束事务 | 全部成功才 `COMMIT`；任一必要写入失败则 `ROLLBACK` |
+| Preparation outside transaction | Query products, validate request, prepare order/item parameters |
+| Start transaction | `START TRANSACTION` on the same connection |
+| Necessary writes | Insert order, then initial items; inspect every result |
+| End transaction | `COMMIT` only if all succeed; otherwise `ROLLBACK` |
 
-应用可预先生成订单主键，也可使用驱动从插入响应返回的自增标识，再作为明细的 `order_id`；不执行 `SELECT LAST_INSERT_ID()` 等事务内查询。
+Generate order IDs in advance or use auto-increment IDs returned by the driver's insert response for item `order_id`; do not query `SELECT LAST_INSERT_ID()` within the transaction.
 
-事务外查到的数据可能在写入前变化。库存、客户启用状态等需要在写入时仍成立的条件，应按[业务条件更新](#业务条件更新)及[客户引用的并发维护](#客户引用的并发维护)校验；不能仅因准备阶段校验通过就直接写入。
+Data can change after preparation. Validate stock, enabled customers, and other write-time conditions using [business-conditional updates](#business-conditional-updates) and [concurrent customer-reference maintenance](#concurrent-customer-reference-maintenance); preparation success alone is insufficient.
 
-#### 事务连接
+#### Transaction connection
 
-假设订单和明细必须共同成功，但应用把异步任务或独立事务中的写入交给了另一连接：
+Suppose order and items must succeed together but asynchronous or independent-transaction writes use another connection:
 
-| 步骤 | 连接 A | 连接 B |
+| Step | Connection A | Connection B |
 | --- | --- | --- |
-| 1 | 开始事务，插入订单，尚未提交 | — |
-| 2 | — | 插入对应明细并独立提交 |
-| 3 | 后续写入失败，回滚 | 明细已提交，不受 A 的回滚影响 |
+| 1 | Begin transaction; insert order, uncommitted | — |
+| 2 | — | Insert item and independently commit |
+| 3 | Later write fails; rollback | Item remains committed, unaffected by A |
 
-本项目不使用外键，因此不能依靠外键阻止上述明细写入。最终订单不存在，但明细仍然存在。
+Without foreign keys, nothing prevents this item insert. The order disappears while its item remains.
 
-正确流程是在连接 A 的同一事务中完成两项写入。连接池应在事务期间保持该连接；使用异步任务或事务传播配置时，确认必要写入没有被放入另一个独立事务。
+Perform both writes in A's same transaction. Pools must retain the connection; check asynchronous tasks and propagation settings do not place required writes in independent transactions.
 
-#### 隐式提交
+#### Implicit commits
 
-下面两段均为反例，假设订单主键此前不存在。
+Both following fragments are counterexamples; assume their order primary keys do not already exist.
 
-再次开启事务不会形成嵌套事务：
+Starting another transaction does not nest it:
 
 ```sql
 START TRANSACTION;
 INSERT INTO sales_order (id, customer_id) VALUES (1001, 10);
-START TRANSACTION; -- 隐式提交此前的订单写入，再开启新事务
-ROLLBACK;          -- 只能回滚新事务，订单 1001 仍然存在
+START TRANSACTION; -- Implicitly commits the order, then starts a new transaction
+ROLLBACK;          -- Only rolls back the new transaction; order 1001 remains
 ```
 
-将自动提交从关闭改为开启，也会提交当前事务：
+Switching autocommit from off to on also commits:
 
 ```sql
 SET autocommit = 0;
 INSERT INTO sales_order (id, customer_id) VALUES (1002, 10);
-SET autocommit = 1; -- 提交此前的订单写入
-ROLLBACK;           -- 订单 1002 仍然存在
+SET autocommit = 1; -- Commits the preceding order insertion
+ROLLBACK;           -- Order 1002 remains
 ```
 
-需要共同成功的写入应使用同一事务边界，不以这些操作开启“内层事务”或切换事务阶段。`ALTER TABLE`、`TRUNCATE TABLE` 等 DDL 也会隐式提交，不应夹在业务写入之间；它们不受随后业务 `ROLLBACK` 的整体撤销保护。参见 [MySQL 隐式提交规则](https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html)。
+Writes requiring joint success share one transaction boundary; these operations do not create inner transactions or harmless stage transitions. DDL such as `ALTER TABLE` and `TRUNCATE TABLE` also implicitly commits and must not occur between business writes; later `ROLLBACK` does not undo them together. See [implicit commits](https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html).
 
-#### 失败处理
+#### Failure handling
 
-假设创建订单时，订单插入成功，后续明细插入报错；两项写入必须共同成功。不能捕获异常后继续提交，须停止后续写入并回滚整个事务。
+If an order inserts successfully but a required item insert fails, do not catch and commit. Stop later writes and roll back the entire transaction.
 
-| 失败情形 | InnoDB 的处理 | 应用后续动作 |
+| Failure | InnoDB handling | Application response |
 | --- | --- | --- |
-| 唯一键冲突，未使用 `IGNORE` | 回滚失败语句，此前写入仍可能保留在事务中 | 回滚整个事务，再按业务唯一性或幂等规则处理 |
-| 死锁 | 回滚整个事务 | 仅在可安全重试时，重新准备参数并有限重试整个事务 |
-| 锁等待超时 | 默认只回滚当前语句；配置可改为回滚整个事务 | 确保整个事务回滚后，再决定是否有限重试 |
-| 必要条件更新返回 0 行 | 不构成数据库语句错误，不会自动撤销此前写入 | 按业务失败处理并回滚整个事务 |
+| Unique conflict without `IGNORE` | Failed statement rolled back; earlier writes may remain | Roll back all, then handle business uniqueness/idempotency |
+| Deadlock | Entire transaction rolled back | Reprepare and finitely retry the whole transaction only if safe |
+| Lock timeout | Normally current statement only; configuration may roll back all | Ensure full rollback before considering limited retries |
+| Required conditional update returns 0 | No statement error or automatic rollback of earlier writes | Treat as business failure and roll back all |
 
-重试需要重新执行完整业务写入，不能仅补做失败语句；依赖旧数据的参数在事务外重新读取和校验。限制重试次数并适当退避，超过限制后报告失败。参见 [MySQL InnoDB 错误处理](https://dev.mysql.com/doc/refman/8.4/en/innodb-error-handling.html)。
+Retry the complete business write, not just the failed statement; reread/revalidate dependent parameters outside the transaction. Limit retries with suitable backoff, then report failure. See [InnoDB error handling](https://dev.mysql.com/doc/refman/8.4/en/innodb-error-handling.html).
 
-若发送 `COMMIT` 后连接中断，应用可能无法判断事务是否已提交。此时不能直接认定失败并生成新的请求标识重做；使用原幂等标识核对业务结果，再按幂等流程恢复。
+A disconnect after sending `COMMIT` can leave commit status unknown. Do not assume failure and issue a new request ID; verify outcomes with the original idempotency ID, then recover through the idempotent flow.
 
-#### 外部操作边界
+#### External operations
 
-对应规则：[事务管理](../SKILL.md#事务管理)中的“外部操作边界”。假设一次业务操作涉及订单写入和外部支付：
+Corresponding rule: External operations under [transaction management](../SKILL.md#transaction-management). Suppose an operation writes orders and makes external payments:
 
-| 顺序 | 操作过程 | 结果 |
+| Order | Operations | Outcome |
 | --- | --- | --- |
-| 先支付，后写库 | 外部支付成功，随后订单写入失败并回滚 | 数据库回滚不会撤销已成功的支付 |
-| 先提交，后支付 | 订单写入并提交，随后外部支付失败 | 支付失败不会自动撤销已提交的订单 |
+| Pay, then write | Payment succeeds; order write fails and rolls back | Database rollback does not undo payment |
+| Commit, then pay | Order commits; payment fails | Payment failure does not undo committed order |
 
-两种流程均将外部调用放在显式数据库事务之外。调整调用顺序不能让两者受同一本地事务保护，业务需另行设计失败处理；本例仅说明事务边界，不规定具体恢复方案。
+Both put external calls outside explicit database transactions. Reordering cannot give them local atomicity. Design business recovery separately; this example defines boundaries, not a particular recovery strategy.
 
-### 并发控制
+### Concurrency control
 
-对应规则：[并发控制](../SKILL.md#并发控制)。
+Corresponding rules: [concurrency control](../SKILL.md#concurrency-control).
 
-#### 业务条件更新
+#### Business-conditional updates
 
-假设商品库存 `available` 使用有符号整数，初值为 1，请求 A、B 各扣减 1。以下为仅在应用读取库存后校验、写入时未附带库存条件的错误流程：
+Assume signed-integer stock `available` starts at 1; requests A and B each deduct 1. This incorrect flow checks only after reading, omitting write-time stock conditions:
 
-| 步骤 | 请求 A | 请求 B |
+| Step | Request A | Request B |
 | --- | --- | --- |
-| 1 | 查询库存，得到 1 | — |
-| 2 | — | 查询库存，也得到 1 |
-| 3 | 不校验剩余库存，直接减 1，库存变为 0 | — |
-| 4 | — | 再减 1，库存变为 -1 |
+| 1 | Reads stock 1 | — |
+| 2 | — | Also reads 1 |
+| 3 | Unconditionally deducts 1, leaving 0 | — |
+| 4 | — | Deducts again, leaving -1 |
 
-先前查询的结果不能保证库存仍然充足，仅开启事务也不会自动补上库存条件。应用在显式事务外校验扣减量为正整数后，执行单条条件更新：
+Previous reads do not guarantee sufficient stock; merely opening a transaction does not add the predicate. Validate a positive integer quantity outside the transaction, then issue one conditional update:
 
 ```sql
 UPDATE stock
@@ -310,9 +310,9 @@ SET available = available - :quantity
 WHERE id = :stock_id AND available >= :quantity;
 ```
 
-A、B 各传入 `quantity = 1`，且没有其他补库存操作时，一个请求更新 1 行，另一个更新 0 行；成功请求不固定，更新 0 行不得判定扣减成功。条件判断和扣减由同一语句完成，不会扣成负数。该操作可在自动提交模式下执行，不额外开启显式事务；如还需共同写入订单，则纳入同一事务。
+With `quantity = 1` each and no replenishment, one updates 1 row and the other 0; either may win. Zero rows is not successful deduction. The statement combines checking and deduction, preventing negative stock. Autocommit suffices without another explicit transaction; include it in a shared transaction if order writes must commit together.
 
-状态流转同样优先使用已有业务字段。例如仅允许待支付订单取消：
+Prefer business fields for state transitions too; for example, only pending-payment orders can be cancelled:
 
 ```sql
 UPDATE sales_order
@@ -320,20 +320,20 @@ SET status = 'cancelled'
 WHERE id = :order_id AND status = 'pending_payment';
 ```
 
-订单已进入其他状态时更新 0 行，不得覆盖当前状态。库存条件和状态条件直接表达业务允许发生的变化，无须为这些操作另增版本字段。
+Other states yield zero updates and are not overwritten. Stock/state predicates directly express permitted changes without extra version columns.
 
-这些条件只保障写入时的业务前提，不证明记录自读取后从未改变。例如，按旧库存计算 `:new_available` 再覆盖写回，仅附带 `available >= :quantity` 仍可能丢失并发修改；应使用上述原子扣减，或校验计算依赖的原值。若业务要求检测期间发生过的任何修改，还须使用不复用的版本标识，不能只比较可能恢复为旧值的业务状态。
+These predicates protect write-time business conditions, not proof that the record never changed after reading. Overwriting `:new_available` computed from old stock with only `available >= :quantity` can lose concurrent changes. Use atomic deduction or validate all old values used in calculation. Detecting any intervening modification requires a non-reused version identifier, not merely a state that may revert.
 
-#### 更新时间校验
+#### Timestamp checks
 
-假设修改客户备注时没有合适的业务状态可用作并发条件。客户表的字段定义为：
+Assume no suitable business state exists for concurrency checking when changing a customer remark. Define:
 
 ```sql
 updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
     ON UPDATE CURRENT_TIMESTAMP(3)
 ```
 
-A、B 在事务外均读到 `updated_at = '2026-10-16 10:00:00.123'`。应用保留这个原值，更新备注时绑定为 `:original_updated_at`：
+A and B both read `updated_at = '2026-10-16 10:00:00.123'` outside transactions. Retain this original value and bind it as `:original_updated_at`:
 
 ```sql
 UPDATE customer
@@ -341,37 +341,37 @@ SET remark = :remark
 WHERE id = :customer_id AND updated_at = :original_updated_at;
 ```
 
-假设请求 A 确实修改了备注，数据库写入的自动更新时间为 `.124`，且该值在本次并发校验期间不再恢复为 `.123`；请求 B 随后仍以原值 `.123` 更新，匹配不到记录，更新 0 行，不会覆盖 A 的修改。
+Assume A changes the remark, the automatic timestamp becomes `.124`, and cannot revert to `.123` during this validation. B's subsequent update using `.123` matches zero rows and does not overwrite A.
 
-这里的 `.123`、`.124` 均表示上述同一秒中的毫秒部分。读写、序列化、反序列化及参数绑定都保留三位毫秒；匹配值使用实际读取到的原时间，不截断到秒，也不改用应用当前时间。`updated_at` 由数据库自动维护，应用不在 `SET` 中重复赋值。
+Here `.123` and `.124` are milliseconds in the same second. Preserve all three digits through reading, writing, serialization, deserialization, and binding. Match the actual original timestamp, without truncation to seconds or substitution of current application time. The database maintains `updated_at`; do not redundantly assign it in `SET`.
 
-`CURRENT_TIMESTAMP(3)` 不是每次修改自动加一的版本号，其时间基准是语句开始执行时刻，不是获得行锁或提交时刻。即使沿用本规范不考虑同一毫秒多次修改的前提，也须确认时间值不会因语句等待或时钟调整而重复、复用；无法保障时改用不复用的版本标识。所有其他字段均未变化时，自动更新时间也不会变化，结果判断按[更新结果判断](#更新结果判断)处理。
+`CURRENT_TIMESTAMP(3)` is not an incrementing version counter. It uses statement start time, not lock acquisition or commit time. Even under the premise excluding multiple changes in one millisecond, confirm waiting or clock changes cannot repeat/reuse timestamps; otherwise use non-reused versions. If all other fields remain unchanged, the automatic timestamp also stays unchanged; interpret results under [update results](#update-results).
 
-参见 [MySQL 自动更新时间规则](https://dev.mysql.com/doc/refman/8.4/en/timestamp-initialization.html)及[当前时间函数](https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_now)。
+See [automatic timestamp rules](https://dev.mysql.com/doc/refman/8.4/en/timestamp-initialization.html) and [current-time functions](https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_now).
 
-#### 客户引用的并发维护
+#### Concurrent customer-reference maintenance
 
-沿用[客户存在性、状态与删除处理](#客户存在性状态与删除处理)：只允许为启用客户创建或转入订单，停用后保留已有订单，存在订单时禁止物理删除客户。
+Continue [customer existence, state, and deletion](#customer-existence-state-and-deletion): create/reassign only to enabled customers, retain existing orders after disabling, and prohibit physical deletion with orders.
 
-先查询客户启用再插入订单，可能遇到查询后客户被删除或停用。仅给订单设置唯一约束也不能协调这些操作。
+Querying enabled status then inserting can race with deletion/disabling. Order uniqueness alone cannot coordinate these operations.
 
-本例在客户表维护 `order_count BIGINT UNSIGNED NOT NULL DEFAULT 0`，计数包含所有仍保留且引用该客户的订单。示例从无订单、计数为零的客户开始；已有数据采用此方案时，须先保证计数与订单一致。该字段只是解释并发协调的一种方案，不要求所有设计增加计数。
+Maintain `order_count BIGINT UNSIGNED NOT NULL DEFAULT 0` in customers, counting all retained referencing orders. Start with no orders and count zero; existing-data adoption requires consistent counts first. This illustrates one coordination strategy, not a mandate to add counts everywhere.
 
-创建订单时，在同一连接执行以下事务流程：
+Create orders in one connection using:
 
 ```sql
 START TRANSACTION;
 UPDATE customer
 SET order_count = order_count + 1
 WHERE id = :customer_id AND status = 'enabled';
--- 应用检查更新结果：不是 1 行则 ROLLBACK，停止后续写入
+-- Application: if updated rows != 1, ROLLBACK and stop later writes
 INSERT INTO sales_order (id, customer_id) VALUES (:order_id, :customer_id);
--- 应用检查插入结果：失败则 ROLLBACK；全部成功才 COMMIT
+-- Application: on insert failure ROLLBACK; COMMIT only after all succeed
 ```
 
-注释表示应用分支，失败后不继续执行下面的语句。订单主键唯一；重复插入失败时，计数增加也随事务回滚。第一条条件更新会实际增加计数，并持有客户记录的写锁直至事务结束。
+Comments represent application branches: do not continue after failure. The order primary key is unique, so duplicate-insert failure rolls back the count increment too. The first update actually increments the count and holds the customer write lock until transaction end.
 
-删除和停用客户分别采用：
+Delete and disable customers respectively using:
 
 ```sql
 DELETE FROM customer
@@ -384,98 +384,98 @@ SET status = 'disabled'
 WHERE id = :customer_id AND status = 'enabled';
 ```
 
-这些操作与创建订单都写入同一客户记录，因此会协调竞争：
+These operations and order creation write the same customer row, coordinating competition:
 
-| 竞争顺序 | 先执行的操作 | 后执行的操作及结果 |
+| Order of competition | First operation | Later operation and outcome |
 | --- | --- | --- |
-| 创建先获得客户记录写锁 | 增加计数并插入订单，随后提交 | 删除等待后发现计数大于零，删除 0 行；停用可在等待后成功，已有订单保留 |
-| 删除先完成 | 计数为零时删除客户并提交 | 创建订单的计数更新匹配不到客户，停止创建 |
-| 停用先完成 | 客户变为停用状态并提交 | 创建订单的计数更新不满足启用条件，停止创建 |
+| Creation locks first | Increment count, insert order, commit | Deletion waits, sees positive count, deletes 0; disabling may succeed after waiting while retaining orders |
+| Deletion finishes first | Delete at count zero and commit | Creation's count update finds no customer; stop |
+| Disabling finishes first | Disable and commit | Creation's count update fails enabled predicate; stop |
 
-若先执行的事务回滚，后执行的操作按回滚后的数据重新判断。不能只给创建流程加校验，却允许删除、停用流程绕开对同一客户记录的协调。
+If the first transaction rolls back, later operations judge rolled-back data. Do not guard creation while allowing deletion/disabling to bypass coordination on the same customer row.
 
-订单物理删除时，在事务外读取原客户编号，在同一事务中先扣减该客户计数，再按订单编号及原客户编号删除订单：
+For physical order deletion, read original customer ID outside the transaction, then decrement that customer's count and delete by both order and original customer in one transaction:
 
 ```sql
 START TRANSACTION;
 UPDATE customer
 SET order_count = order_count - 1
 WHERE id = :original_customer_id AND order_count > 0;
--- 应用检查更新结果：不是 1 行则 ROLLBACK，停止后续写入
+-- Application: if updated rows != 1, ROLLBACK and stop later writes
 DELETE FROM sales_order
 WHERE id = :order_id AND customer_id = :original_customer_id;
--- 应用检查删除结果：不是 1 行则 ROLLBACK；全部成功才 COMMIT
+-- Application: if deleted rows != 1, ROLLBACK; COMMIT only after all succeed
 ```
 
-删除必须校验原客户编号：若订单已被转移，仅按订单主键删除会扣减旧客户计数，却留下新客户的多余计数。附带原客户条件后，这种竞争会使删除返回 0 行，计数扣减随事务回滚。订单编号不复用；如订单还有明细等引用，须一并执行其删除或保留规则，本片段仅说明客户计数与订单归属的协调。
+Validate original customer ID: if reassigned, deletion by order ID alone decrements the old customer's count but leaves excess count for the new one. The original-customer predicate makes that race return zero, rolling back decrement. Do not reuse order IDs. Apply deletion/retention rules for items or other references too; this fragment only coordinates counts and ownership.
 
-订单转移客户时，原客户和目标客户相同则不调整计数；否则在同一事务中扣减原客户计数、增加启用目标客户计数，并按原客户编号条件更新订单归属。参数在事务外准备，扣减要求计数大于零，每项必要写入均检查结果，任一项失败则全部回滚。涉及两个客户时，按[写入顺序](#写入顺序)确定计数更新先后，而非固定先扣减再增加。逻辑删除仍保留引用时不扣减计数，其他写入路径也不得绕过计数维护。
+On reassignment to the same customer, leave counts unchanged. Otherwise decrement old and increment enabled target, then update ownership with an original-customer predicate in one transaction. Prepare parameters outside, require positive counts for decrement, inspect all required writes, and roll back all on failure. For two customers, choose update order under [write order](#write-order), not always decrement-first. Logical deletion retaining references does not decrement counts; all write paths must maintain them.
 
-#### 更新结果判断
+#### Update results
 
-以库存条件更新为例，扣减量为正数时，成功匹配必然改变库存；更新 1 行表示扣减成功，更新 0 行不能判为成功。
+A positive conditional stock deduction necessarily changes stock when matched: one updated row means success, zero does not.
 
-但 0 行本身不能区分“库存记录不存在”和“记录存在但库存不足”。若业务需要区分：
+Zero alone cannot distinguish missing stock from insufficient stock. If required:
 
-1. 确认自动提交的更新语句已结束；如更新位于显式事务内，先因必要写入失败回滚整个事务。
-2. 在显式事务外按主键查询当前库存；不存在时报告不存在，存在时根据当前值说明条件不满足。
+1. Ensure the autocommit update has finished; if in an explicit transaction, roll back all because a required write failed.
+2. Query current stock by primary key outside explicit transactions; report absence or explain the unmet condition using current values.
 
-查询用于解释当前状态，不能精确还原更新失败时的原因，也不能证明下一次写入必然成功；重试仍须带条件。
+This explains current state, not the exact past failure cause or guaranteed next-write success. Retries still require predicates.
 
-驱动的影响行数可能表示匹配行数，也可能表示实际变更行数，须核对所用配置。例如某表不含自动更新时间列，一行 `remark` 已为“已联系”，再次设为“已联系”，且其他列均未变化：按匹配行数可能返回 1，按实际变更行数返回 0。因此不能把所有更新返回 0 都解释为记录不存在或乐观锁冲突。参见 [MySQL 影响行数说明](https://dev.mysql.com/doc/c-api/8.4/en/mysql-affected-rows.html)。
+Driver counts may mean matched or changed rows; verify configuration. For a table without automatic timestamps, setting an already "Contacted" remark to "Contacted" without other changes may return 1 matched but 0 changed. Thus zero does not universally mean missing record or optimistic-lock conflict. See [affected rows](https://dev.mysql.com/doc/c-api/8.4/en/mysql-affected-rows.html).
 
-#### 写入顺序
+#### Write order
 
-假设事务 A、B 都要修改库存记录 1、2，并持锁到提交：
+Assume A and B modify stock rows 1 and 2, holding locks to commit:
 
-| 步骤 | 事务 A | 事务 B |
+| Step | Transaction A | Transaction B |
 | --- | --- | --- |
-| 1 | 修改记录 1，持有其写锁 | — |
-| 2 | — | 修改记录 2，持有其写锁 |
-| 3 | 请求修改记录 2，等待 B | — |
-| 4 | — | 请求修改记录 1，等待 A，形成死锁 |
+| 1 | Update 1; hold write lock | — |
+| 2 | — | Update 2; hold write lock |
+| 3 | Request 2; wait for B | — |
+| 4 | — | Request 1; wait for A: deadlock |
 
-统一为先修改记录 1、再修改记录 2 后，一个事务在记录 1 上等待，获得锁的事务可继续修改记录 2 并提交，避免上述相反顺序形成的循环等待。
+With both updating 1 before 2, one waits at 1 while the lock holder updates 2 and commits, avoiding this opposite-order cycle.
 
 ```sql
 START TRANSACTION;
 UPDATE stock SET available = available - :quantity_1
 WHERE id = 1 AND available >= :quantity_1;
--- 应用检查成功后才执行下一项，否则回滚整个事务
+-- Application: proceed only on success; otherwise roll back all
 UPDATE stock SET available = available - :quantity_2
 WHERE id = 2 AND available >= :quantity_2;
--- 应用检查全部成功才提交，否则回滚整个事务
+-- Application: commit only if all succeeded; otherwise roll back all
 ```
 
-两项扣减量均须为正数。所有竞争这些记录的流程采用相同顺序，涉及多张表时也统一表的访问顺序；不能只调整其中一个入口。
+Both quantities must be positive. All competing paths use the same record order and, for multiple tables, the same table order; changing only one entry point is insufficient.
 
-单条语句的 `WHERE id IN (1, 2)` 只是匹配条件，不表示数据库承诺先锁记录 1 再锁记录 2。上述例子使用按主键顺序执行的独立更新，不能把条件文本的顺序当作锁顺序；统一访问顺序也不能排除其他资源导致的死锁。
+`WHERE id IN (1, 2)` is a predicate, not a promise to lock 1 before 2. The example uses separate primary-key-ordered updates. Predicate text order is not lock order, and consistent access order does not eliminate deadlocks involving other resources.
 
-## 性能优化
+## Performance optimization
 
-以下示例中的性能验证先按正文[执行计划与性能验证](../SKILL.md#执行计划与性能验证)判定复杂性；仅复杂 SQL 开展专项验证，非复杂 SQL 保留正确性检查，无须额外分析执行计划或压测。
+First classify under [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification). Perform dedicated verification only for complex SQL; keep correctness checks for non-complex SQL without extra plans or load tests.
 
-### 索引优化
+### Index optimization
 
-对应规则：[索引优化](../SKILL.md#索引优化)。
+Corresponding rules: [index optimization](../SKILL.md#index-optimization).
 
-#### 低区分度字段
+#### Low-cardinality fields
 
-假设 `sales_order` 有 100 万行，`id` 为主键，`status` 有五种状态：
+Assume `sales_order` has 1,000,000 rows, primary key `id`, and five `status` values:
 
-| 状态 | 行数 |
+| Status | Rows |
 | --- | ---: |
-| 待处理 `pending` | 500 |
-| 处理中 `processing` | 9,500 |
-| 已完成 `completed` | 900,000 |
-| 已取消 `cancelled` | 80,000 |
-| 已关闭 `closed` | 10,000 |
+| Pending `pending` | 500 |
+| Processing `processing` | 9,500 |
+| Completed `completed` | 900,000 |
+| Cancelled `cancelled` | 80,000 |
+| Closed `closed` | 10,000 |
 
-不同值少，表示字段整体区分度低；不代表每个值都匹配大量记录。本例数量仅用于解释数据分布，不是建索引阈值。各场景独立评估候选索引，不要求全部建立；以下结论是评估方向，不是实测结果或优化器必定使用索引的保证。
+Few distinct values means low overall cardinality, not that every value matches many rows. Counts illustrate distributions, not index thresholds. Evaluate candidates independently without creating all. Conclusions below guide assessment, not measured results or guaranteed optimizer choices.
 
-##### 正例：稀有状态过滤
+##### Positive example: rare-state filtering
 
-经常读取待处理订单的相关明细：
+Frequently retrieve pending-order details:
 
 ```sql
 SELECT id, customer_id, total_amount, created_at
@@ -483,11 +483,11 @@ FROM sales_order
 WHERE status = 'pending';
 ```
 
-可评估单列索引 `(status)`。虽然只有五种状态，但本次查询只匹配 500 行；索引可缩小定位范围，再回表读取所需字段。若这些查询频繁且回表成本低于扫描整表，索引就有价值；不能因 `status` 的不同值少而直接排除。
+Evaluate `(status)`: despite five states, only 500 rows match. An index narrows location before table lookups. Frequent queries benefit if lookup cost is below a table scan; low distinct-value count alone does not exclude it.
 
-##### 正例：过滤后排序取少量结果
+##### Positive example: filter, sort, and fetch a few rows
 
-按状态查询最新 20 条订单：
+Retrieve the latest 20 orders in a state:
 
 ```sql
 SELECT id, created_at
@@ -497,11 +497,11 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-可评估联合索引 `(status, created_at, id)`。固定状态后，索引可按后续列顺序反向读取，满足排序并在取得足够记录后停止；所需列也均在索引中。`id` 用于确定相同创建时间下的顺序。即使目标状态有很多记录，也不等于必须读取全部匹配记录。
+Evaluate `(status, created_at, id)`. With status fixed, reverse index order supports sorting and stopping after enough rows; all required columns are covered. `id` breaks creation-time ties. A common state does not imply reading every matching row.
 
-##### 正例：租户与状态联合过滤
+##### Positive example: tenant and state filtering
 
-查询指定租户、指定状态下最新的订单：
+Retrieve the latest orders for a tenant and state:
 
 ```sql
 SELECT id, created_at
@@ -511,11 +511,11 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-可评估联合索引 `(tenant_id, status, created_at, id)`，先定位租户和状态的组合，再按时间及主键顺序读取。此列顺序还便于复用租户左前缀；是否选用须结合其他查询。低区分度的 `status` 可以放在排序列之前，不机械要求区分度最高的列优先。
+Evaluate `(tenant_id, status, created_at, id)` to locate the tenant/state pair, then read in timestamp/key order. This also reuses the tenant left prefix; consider other queries. Low-cardinality `status` may precede sort columns; do not mechanically put highest-cardinality columns first.
 
-##### 正例：覆盖查询
+##### Positive example: covering query
 
-需要统计指定状态的订单总数：
+Count orders in a state:
 
 ```sql
 SELECT COUNT(*)
@@ -523,11 +523,11 @@ FROM sales_order
 WHERE status = :status;
 ```
 
-可评估单列索引 `(status)`。从查询所需列看，该索引可覆盖查询，可能减少整行数据读取；即使统计已完成的 90 万行，也可能比扫描较宽的表记录成本低。计数仍须扫描匹配的索引项，不是一次索引定位就能得到总数；实际回表及可见性检查成本也须验证。
+Evaluate `(status)` as a covering index, potentially reducing full-row reads even for 900,000 completed orders versus wide table rows. Counting still scans matching entries, not one lookup; verify actual table lookups and visibility-check costs.
 
-##### 反例：常见状态、大量回表
+##### Counterexample: common state and many table lookups
 
-需要一次性读取全部已完成订单的多项明细：
+Retrieve multiple details for all completed orders at once:
 
 ```sql
 SELECT id, customer_id, total_amount, shipping_address, remark
@@ -535,13 +535,13 @@ FROM sales_order
 WHERE status = 'completed';
 ```
 
-若为此增加单列索引 `(status)`，按该索引执行需要扫描约 90 万个匹配索引项，并回表读取非索引字段。大量回表可能比全表扫描更贵，不能仅因条件中有 `status` 就认定该索引值得建立。
+A `(status)` index could scan about 900,000 entries and fetch non-indexed fields. Many lookups may cost more than a table scan; a status predicate alone does not justify adding it.
 
-此判断针对本例的单列索引和大量明细读取，不代表 `status` 不能参与其他有收益的索引，也不把 90% 作为通用临界值。
+This concerns the example's single-column index and bulk detail retrieval, not all status indexes; 90% is not a universal cutoff.
 
-##### 反例：已有主键访问路径
+##### Counterexample: existing primary-key access
 
-按订单编号校验原状态并更新：
+Check old state and update by order ID:
 
 ```sql
 UPDATE sales_order
@@ -549,11 +549,11 @@ SET status = :new_status
 WHERE id = :id AND status = :status;
 ```
 
-主键 `id` 已能定位至多一行，再判断状态即可。没有其他相关查询需求时，无须仅为这条语句增加单列索引 `(status)`；新增索引还会增加状态变更时的维护成本。该例说明需要分析整条查询，而不是逐个过滤字段建索引。
+Primary key `id` already locates at most one row before checking state. Without other needs, do not add `(status)` solely for this statement, increasing maintenance on transitions. Analyze whole queries rather than indexing each predicate independently.
 
-##### 反例：已有联合索引满足查询
+##### Counterexample: an existing composite index suffices
 
-假设已有 `(status, created_at, id)`，查询如下：
+Assume `(status, created_at, id)` already exists:
 
 ```sql
 SELECT id, created_at
@@ -563,39 +563,39 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-已有索引的左前缀支持状态过滤，后续列支持排序和覆盖读取。再增加单列索引 `(status)` 对这条查询没有明确收益，反而增加空间与写入成本；不能因为未找到同名的单列索引就补建。其他查询若能从更窄的索引中获益，另行验证后再决定。
+Its prefix filters status and remaining columns support sorting/coverage. Another `(status)` offers no clear benefit here but adds space/write costs. Do not add one merely because no single-column index exists; separately verify benefits for other queries needing a narrower index.
 
-##### 反例：写入成本高、读取收益小
+##### Counterexample: high write cost with little read benefit
 
-假设订单状态频繁流转，按状态查询却很少，且主要执行上述“读取全部已完成订单明细”的查询。拟增加的单列索引仍为 `(status)`。
+Assume frequent state transitions but rare status queries, mainly the bulk completed-order detail query above. The proposed index remains `(status)`.
 
-每次状态变化都要维护对应索引项；如果少量查询也因大量回表而收益有限，新增索引的写入、存储和维护成本就缺乏足够回报，不应仅因表达到百万行便建立。
+Every transition maintains entries. If rare reads also gain little due to lookups, write/storage/maintenance costs lack sufficient return; a million-row table alone is no justification.
 
-这不是禁止为高频更新字段建索引；如果状态筛选、排序或覆盖查询有显著收益，应重新按实际负载权衡。
+This is not a ban on indexing frequently updated fields; substantial filtering, ordering, or coverage benefits warrant reassessment against actual load.
 
-##### 验证方式
+##### Verification
 
-先按正文的[执行计划与性能验证](../SKILL.md#执行计划与性能验证)判定复杂性；需要专项验证时，使用代表性数据分别验证常见状态和稀有状态，比较有无候选索引时的扫描量、回表、排序及完整结果读取成本；按实际状态变更负载评估写入影响。涉及 `LIMIT` 的场景覆盖不同参数和结果规模，不把单个状态或单次查询的结果推广到全部业务。
+Classify under [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification). When dedicated verification is needed, compare common/rare states with representative data, scans, lookups, sorting, and full-result read costs with/without candidates; assess writes under actual transition load. Cover different parameters/results for `LIMIT`; do not generalize one state or run to all operations.
 
 
-#### 前缀索引
+#### Prefix indexes
 
-对应规则：[索引优化](../SKILL.md#索引优化)中的“前缀索引”。假设 `code` 为 `VARCHAR(32) NOT NULL`，业务按完整编号判断唯一性，以下两个值应允许同时存在：
+Corresponding rule: Prefix indexes under [index optimization](../SKILL.md#index-optimization). Assume `code VARCHAR(32) NOT NULL` is unique by full value; both should coexist:
 
-| 完整编号 | 前八个字符 |
+| Full code | First eight characters |
 | --- | --- |
 | `ORDER001-A` | `ORDER001` |
 | `ORDER001-B` | `ORDER001` |
 
-若定义 `UNIQUE(code(8))`，第二个值会因前八个字符重复而被拒绝；完整值不同并不能避免前缀唯一性冲突。该定义比完整值唯一性要求更严格，会误拒绝业务允许的记录。
+`UNIQUE(code(8))` rejects the second value for a shared prefix despite distinct full codes. It is stricter than business uniqueness and rejects valid records.
 
-本例完整列长度可被索引，使用 `UNIQUE(code)` 才能按完整编号限制唯一性；比较语义仍由列的排序规则决定，不将字节不同等同于业务唯一。
+The complete column is indexable here; `UNIQUE(code)` enforces full-code uniqueness. Comparison still follows collation, so different bytes do not automatically establish business uniqueness.
 
-普通索引 `INDEX(code(8))` 不限制唯一性，可缩小候选范围，但相同前缀仍可能对应大量记录，需要继续检查完整值。前缀取八个字符仅为示意，应使用实际数据比较不同长度下的候选数量、索引大小和查询成本，不采用统一前缀长度。参见 [MySQL 列索引说明](https://dev.mysql.com/doc/refman/8.4/en/column-indexes.html)。
+Nonunique `INDEX(code(8))` narrows candidates without uniqueness, but shared prefixes may still match many full values. Eight is illustrative; compare candidate counts, size, and query costs for actual prefix lengths. See [column indexes](https://dev.mysql.com/doc/refman/8.4/en/column-indexes.html).
 
-#### 联合索引
+#### Composite indexes
 
-对应规则：[索引优化](../SKILL.md#索引优化)中的“联合索引”。假设经常查询某租户、某状态、某时间段内最新的订单：
+Corresponding rule: Composite indexes under [index optimization](../SKILL.md#index-optimization). Assume frequent latest-order retrieval for a tenant, state, and time range:
 
 ```sql
 SELECT id, created_at
@@ -606,20 +606,20 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-比较两个候选索引，均按列的默认升序建立：
+Compare ascending indexes:
 
-| 候选索引 | 范围定位与排序 |
+| Candidate | Range and ordering |
 | --- | --- |
-| `(tenant_id, status, created_at, id)` | 先固定租户和状态，再定位时间范围；可反向读取，按时间和主键降序取得结果 |
-| `(tenant_id, created_at, status, id)` | 先固定租户，再定位时间范围；该范围可能包含其他状态，需要继续过滤，不能假定 `status` 还能缩小同一个连续扫描范围 |
+| `(tenant_id, status, created_at, id)` | Fix tenant/state, locate time range, reverse-read by timestamp/key descending |
+| `(tenant_id, created_at, status, id)` | Fix tenant, locate time range, then filter other states; status may not narrow the same contiguous range |
 
-第二个索引中的 `status` 位于时间范围列后，不意味着它完全无用；可能继续参与索引内过滤。对本例固定租户和状态的查询，两个索引也都可能支持所需排序，不能仅凭范围列的位置断言必有 `filesort`。重点比较实际扫描范围及过滤成本，而不是只看“用了索引”。
+Status after the range column is not useless: it may support index filtering. With tenant/state fixed, both candidates may support required ordering; range position alone does not guarantee `filesort`. Compare actual scans/filtering, not merely index use.
 
-如果另一条高频查询只限定租户和时间、不限定状态，第二个索引可能更适合它；第一个索引不能被视为所有查询的统一最优解。按整体查询负载选择列顺序，不机械地按字段区分度排名。参见 [MySQL 联合索引说明](https://dev.mysql.com/doc/refman/8.4/en/multiple-column-indexes.html)。
+For frequent queries filtering tenant/time without state, the second may suit better; the first is not universally optimal. Choose order for the whole workload, not cardinality rankings. See [multiple-column indexes](https://dev.mysql.com/doc/refman/8.4/en/multiple-column-indexes.html).
 
-#### 排序成本
+#### Sort cost
 
-对应规则：[索引优化](../SKILL.md#索引优化)中的“排序成本”。查询某租户金额最高的 20 笔订单：
+Corresponding rule: Sort cost under [index optimization](../SKILL.md#index-optimization). Retrieve a tenant's 20 highest-value orders:
 
 ```sql
 SELECT id, total_amount
@@ -629,20 +629,20 @@ ORDER BY total_amount DESC, id DESC
 LIMIT 20;
 ```
 
-| 方案 | 收益与成本 |
+| Approach | Benefits and costs |
 | --- | --- |
-| 已有索引 `(tenant_id)` | 定位租户的订单，读取金额后再排序；执行计划可能出现 `filesort` |
-| 候选索引 `(tenant_id, total_amount, id)` | 可按索引反向读取满足排序及覆盖查询，但增加存储空间，插入订单和修改金额也需维护索引 |
+| Existing `(tenant_id)` | Locate tenant orders, read amounts, sort; plan may show `filesort` |
+| Candidate `(tenant_id, total_amount, id)` | Reverse-read sorted covered results; adds storage and insert/amount-update maintenance |
 
-若某租户只有几十笔订单，查询也很少，筛选后的排序成本可能很低，不必仅因出现 `filesort` 就增加索引。若常见租户有大量候选订单且查询频繁，再验证联合索引减少扫描、回表及排序的收益是否值得维护成本。
+For rare queries on a few dozen orders, filtered sorting may be cheap enough without new indexes. For frequent queries with many candidates, verify whether reduced scans/lookups/sorting justify maintenance.
 
-`LIMIT 20` 不代表第一种方案只处理 20 行；为找到金额最高的订单，仍可能读取大量候选记录。这里的数量用于解释场景，不是建索引阈值；`filesort` 表示额外排序，不等于必然发生磁盘排序。参见 [MySQL 排序优化说明](https://dev.mysql.com/doc/refman/8.4/en/order-by-optimization.html)。
+`LIMIT 20` does not bound the first approach to processing 20 rows. Finding highest amounts may read many candidates. Counts are illustrative, not thresholds; `filesort` means extra sorting, not necessarily disk sorting. See [ORDER BY optimization](https://dev.mysql.com/doc/refman/8.4/en/order-by-optimization.html).
 
-#### 索引列与表达式
+#### Indexed columns and expressions
 
-对应规则：[索引优化](../SKILL.md#索引优化)中的“索引列与表达式”。假设 `created_at` 按本规范存储北京时间，已有普通索引 `(created_at)`，需要筛选北京时间 2026 年 10 月 16 日的订单。
+Corresponding rule under [index optimization](../SKILL.md#index-optimization). Assume Beijing-time `created_at`, ordinary `(created_at)`, and a business day of October 16, 2026.
 
-不优先采用对原列提取日期的写法：
+Do not prefer extracting the date from the original column:
 
 ```sql
 SELECT id, created_at
@@ -650,9 +650,9 @@ FROM sales_order
 WHERE DATE(created_at) = :day;
 ```
 
-其中 `:day` 为 `2026-10-16`。普通索引按原始时间值排序，不能据此假定对 `DATE(created_at)` 的等值比较会自动转为原列的范围查找。
+Here `:day` is `2026-10-16`. An index ordered by original timestamps does not establish that `DATE(created_at)` equality automatically becomes an original-column range scan.
 
-优先使用直接比较原列的时间范围：
+Prefer directly comparing the original column to time boundaries:
 
 ```sql
 SELECT id, created_at
@@ -660,15 +660,15 @@ FROM sales_order
 WHERE created_at >= :start_time AND created_at < :end_time;
 ```
 
-在事务外按业务时区计算边界，绑定 `:start_time = 2026-10-16 00:00:00.000`、`:end_time = 2026-10-17 00:00:00.000`，参数采用与字段兼容的时间类型。左闭右开范围包含当天的小数秒记录，不依赖“当天最后一毫秒”的硬编码，也不遗漏后续精度变化后的记录。
+Compute business-zone boundaries outside transactions; bind `:start_time = 2026-10-16 00:00:00.000` and `:end_time = 2026-10-17 00:00:00.000` with compatible types. Half-open intervals include fractional seconds without hard-coding the last millisecond or missing records after precision changes.
 
-若字段存储时间基准不同，应将业务日边界转换为字段采用的时间基准，不能直接套用本例字面量。
+If stored time basis differs, convert business boundaries accordingly rather than copying literals.
 
-确需保持日期表达式过滤时，评估匹配 `DATE(created_at)` 的函数索引，或为相同表达式定义生成列并建立索引；核验目标版本支持及查询表达式匹配要求。不能将本例推广为“任何函数都会使任何索引失效”，按正文判定复杂性，需要专项验证时再检查执行计划及实际数据。参见 [MySQL 函数索引说明](https://dev.mysql.com/doc/refman/8.4/en/create-index.html#create-index-functional-key-parts)。
+If date-expression filtering is necessary, evaluate a matching `DATE(created_at)` functional index or indexed generated column; verify version support and expression matching. Do not infer all functions invalidate all indexes. Classify complexity and inspect plans/data when necessary. See [functional key parts](https://dev.mysql.com/doc/refman/8.4/en/create-index.html#create-index-functional-key-parts).
 
-#### 前导通配符
+#### Leading wildcards
 
-对应规则：[索引优化](../SKILL.md#索引优化)中的“前导通配符”。假设 `product.name` 为字符串列，已有普通 B-tree 索引 `(name)`：
+Corresponding rule under [index optimization](../SKILL.md#index-optimization). Assume string `product.name` with ordinary B-tree `(name)`:
 
 ```sql
 SELECT id, name FROM product WHERE name LIKE 'abc%';
@@ -678,23 +678,23 @@ SELECT id, name FROM product WHERE name LIKE 'abc%';
 SELECT id, name FROM product WHERE name LIKE '%abc%';
 ```
 
-| 匹配方式 | 索引范围定位 |
+| Pattern | Index range access |
 | --- | --- |
-| `'abc%'` | 有固定开头，可按排序规则及优化条件形成索引范围；不保证优化器一定选用 |
-| `'%abc%'` | 没有固定开头，通常不能用该索引定位有效范围；即使执行计划使用覆盖索引扫描，也不代表实现了范围查找 |
+| `'abc%'` | Fixed prefix may form a range under collation/optimization conditions; optimizer use is not guaranteed |
+| `'%abc%'` | No fixed prefix, generally no useful range; a covering-index scan is not a range lookup |
 
-第二条查询要求任意位置包含子串 `abc`。分词全文检索通常按词项及解析规则匹配，与任意子串匹配不同，不能只为避免扫描便直接替换查询语义。评估全文索引或专门搜索方案时，先确认其匹配规则符合需求；数据量小或查询低频时，也可在验证成本可接受后保留扫描。参见 [MySQL 范围优化说明](https://dev.mysql.com/doc/refman/8.4/en/range-optimization.html)。
+The second query requires substring `abc` anywhere. Tokenized full-text search uses terms/parser rules and is not equivalent. Preserve matching semantics before evaluating full-text or dedicated search. For small/infrequent queries, retaining an acceptable measured scan may be reasonable. See [range optimization](https://dev.mysql.com/doc/refman/8.4/en/range-optimization.html).
 
-以上五组示例均为原理说明，候选索引未在真实 MySQL 中实测；先按正文的[执行计划与性能验证](../SKILL.md#执行计划与性能验证)判定复杂性，复杂 SQL 验证后再选用。
+These five groups explain principles, not real-MySQL measurements. Classify under [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification); verify complex SQL before adopting candidates.
 
 
-#### 索引复用与变更
+#### Index reuse and changes
 
-对应规则：[索引优化](../SKILL.md#索引优化)中的“索引复用与变更”。以下场景沿用订单表，`id` 为主键，已有普通联合索引 `(tenant_id, status, created_at, id)`。新增 SQL 或过滤条件后，先检查已有访问路径，不要求将每个条件都加入索引。
+Corresponding rule under [index optimization](../SKILL.md#index-optimization). Continue the order table with primary `id` and ordinary `(tenant_id, status, created_at, id)`. Check existing paths before adding SQL/predicates; not every predicate needs an index column.
 
-##### 新增条件仍复用旧索引
+##### Reuse the old index with added predicates
 
-原查询按租户、状态和时间范围获取最新订单，新需求增加渠道过滤：
+Add channel filtering to latest orders by tenant, state, and time:
 
 ```sql
 SELECT id, created_at, channel
@@ -706,15 +706,15 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-已有索引仍可定位租户、状态和时间范围，按时间及主键降序读取候选记录，再回表检查 `channel`，直至获得足够结果或扫描完候选范围。
+The existing index still locates tenant/state/time and reads timestamp/key descending, checking `channel` via table lookup until enough results or exhaustion.
 
-如果候选范围很小，额外读取和过滤的成本可能已满足延迟要求，无须立即增加渠道索引。`channel` 不在索引中，不等于整条查询不可接受；也不能用 `LIMIT 20` 推断只需扫描 20 条候选记录。
+Small candidate ranges may meet latency targets without a new channel index. A missing indexed channel does not make the query unacceptable, and `LIMIT 20` does not imply only 20 candidates scanned.
 
-##### 确有瓶颈再调整
+##### Adjust only for an actual bottleneck
 
-同一查询若需扫描大量候选订单才能筛出少量指定渠道记录，且属于高频或关键路径，可评估候选索引 `(tenant_id, status, channel, created_at, id)`。它将渠道纳入等值前缀，再定位时间范围并利用索引顺序读取。
+If many candidates must be scanned for a few matching-channel rows on a frequent/critical path, evaluate `(tenant_id, status, channel, created_at, id)`: channel joins the equality prefix before time-range and ordered reads.
 
-但不带渠道条件的原查询仍可能存在：
+But the original query without channel may remain:
 
 ```sql
 SELECT id, created_at
@@ -725,46 +725,46 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-新索引在时间列前增加了未被固定的 `channel`；不同渠道的时间分别排列，不能直接假定索引能按所有渠道的整体时间顺序返回结果。
+The new index inserts unfixed `channel` before time, ordering times separately by channel rather than necessarily globally across channels.
 
-| 调整方式 | 收益与代价 |
+| Change | Benefits and costs |
 | --- | --- |
-| 保留旧索引，不新增 | 无额外索引成本；新增查询继续读取候选记录并过滤渠道，需确认性能目标可满足 |
-| 保留旧索引并增加新索引 | 两类查询可分别评估对应访问路径，但增加存储、插入及相关字段更新的维护成本 |
-| 用新索引替换旧索引 | 避免同时维护两个索引，但不带渠道条件的原查询可能扫描更多记录或额外排序，须验证可接受后再替换 |
+| Keep old, add nothing | No extra cost; new query filters candidates, subject to performance targets |
+| Keep old and add new | Evaluate paths for both query types; more storage/insert/update maintenance |
+| Replace old with new | Avoid dual maintenance, but old no-channel queries may scan/sort more; verify before replacing |
 
-这里的“很小”“大量”取决于实际数据、查询频率和性能目标，不设统一数量阈值。候选索引的列更多，并不意味着可以完整替代旧索引。
+Small/large depends on data, frequency, and targets, not universal counts. More columns does not mean complete replacement.
 
-##### 合并或替换前核对用途
+##### Check purposes before merging or replacing
 
-梳理该表的主要查询及约束，而不是仅比较索引定义的列是否重叠。例如：
+Inventory major queries and constraints, not just overlapping index columns:
 
-| 查询或约束 | 对应索引 | 核对用途 |
+| Query or constraint | Index | Purpose to check |
 | --- | --- | --- |
-| 按订单编号读取或修改 | 主键 `(id)` | 精确定位记录，同时保障主键唯一性 |
-| 按租户、状态、时间获取最新订单 | `(tenant_id, status, created_at, id)` | 过滤、时间范围定位和排序 |
-| 上述查询增加渠道过滤 | 先复用旧索引，再评估 `(tenant_id, status, channel, created_at, id)` | 比较过滤渠道前的扫描量、回表量及排序成本 |
-| 按租户和状态查询，不要求时间排序 | 已有联合索引的左前缀 | 不因缺少 `(tenant_id, status)` 单独索引便机械补建；如需更窄索引，先验证额外收益 |
-| 同一租户内订单编号唯一 | 唯一索引 `(tenant_id, order_no)` | 保障业务唯一性，不能以普通索引或追加 `status` 的唯一索引替代原约束 |
+| Read/update by order ID | Primary `(id)` | Exact lookup and primary uniqueness |
+| Latest orders by tenant/state/time | `(tenant_id, status, created_at, id)` | Filter, time range, order |
+| Add channel filtering | Reuse old, then evaluate `(tenant_id, status, channel, created_at, id)` | Scans before channel filtering, lookups, sorting |
+| Tenant/state without time order | Existing composite left prefix | Do not mechanically add `(tenant_id, status)`; verify benefits of a narrower index first |
+| Unique order number per tenant | Unique `(tenant_id, order_no)` | Business uniqueness; ordinary or status-extended uniqueness is not a substitute |
 
-最后一行是另一项约束示例：即使新索引包含 `tenant_id`、`order_no`，普通索引也不保障唯一性；`UNIQUE(tenant_id, order_no, status)` 则会允许同一订单编号以不同状态重复存在，改变业务规则。
+The final row is another constraint: ordinary indexes containing tenant/order number do not enforce uniqueness; `UNIQUE(tenant_id, order_no, status)` permits repeated order numbers in different states, changing business rules.
 
-先按正文的[执行计划与性能验证](../SKILL.md#执行计划与性能验证)判定新增查询和受影响旧查询的复杂性；需要专项验证时，在可比条件下比较，计入写入及存储成本，再决定保留、合并或替换。以上为方案分析，未在真实 MySQL 中实测，不保证候选索引更快，也不要求建立表中全部索引。
+Classify new and affected existing queries under [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification). If needed, compare under equivalent conditions including write/storage costs before retaining/merging/replacing. This is design analysis, not real-MySQL measurement; candidates are not guaranteed faster and not all listed indexes are required.
 
 
-### 查询优化
+### Query optimization
 
-对应规则：[查询优化](../SKILL.md#查询优化)。以下示例按目标版本的 MySQL 查询语义分析，不在显式事务内执行查询；SQL 采用驱动参数绑定。金额和数量仅用于解释结果，不是优化阈值，查询改写未在真实 MySQL 中实测。
+Corresponding rules: [query optimization](../SKILL.md#query-optimization). Analyze target-version semantics, bind parameters, and keep queries outside explicit transactions. Amounts/counts explain results, not optimization thresholds; rewrites have not been measured in real MySQL.
 
-#### 批量查询
+#### Batch queries
 
-对应正文[查询优化](../SKILL.md#查询优化)中的“批量查询”及[性能优化](../SKILL.md#性能优化)中的“请求往返”。以下请求次数指业务语句的实际发送次数，连接建立、事务控制等另计；并发发送多条请求不等于减少请求次数。
+Corresponding rules: Batch queries under [query optimization](../SKILL.md#query-optimization), and Request round trips under [performance optimization](../SKILL.md#performance-optimization). Counts mean actual business-statement sends, excluding connection setup and transaction control. Sending concurrently does not reduce request count.
 
-##### 多对一联表替代逐条补充信息
+##### Many-to-one joins instead of per-row enrichment
 
-假设一页订单需要显示客户当前名称，`customer.id` 是全表唯一的主键。先查询订单、再循环查询客户名称，会产生一次订单查询加 N 次客户查询；N 是实际返回的订单数，即使多个订单属于同一客户，逐条查询仍会重复发送请求。
+Suppose an order page displays current customer names and `customer.id` is globally unique. Reading orders then fetching each customer's name requires 1 + N requests, where N is returned orders; repeated customers still cause repeated requests.
 
-可评估一次查询取得订单和客户名称：
+Evaluate retrieving orders/names in one query:
 
 ```sql
 SELECT o.id, o.created_at, o.customer_id, c.name AS customer_name
@@ -775,9 +775,9 @@ ORDER BY o.created_at DESC, o.id DESC
 LIMIT 20;
 ```
 
-客户主键唯一，一笔订单至多匹配一个客户，因此不会放大订单行数；`LEFT JOIN` 保留无匹配客户的订单，客户名称为 `NULL`。原流程也须采用相同的缺失处理，不能将“缺失时报错”悄然改为返回空值。只读取所需列，先判断订单筛选、排序及客户主键关联的成本是否可静态确定，复杂 SQL 再验证实际访问路径，不因减少请求就忽略扫描成本。
+Unique customer keys mean at most one match per order, without row multiplication. `LEFT JOIN` retains missing customers with `NULL` names. Preserve the original missing-customer contract; do not silently convert errors to nulls. Select only needed fields, assess static costs of filtering/ordering/key joins first, then verify complex paths; fewer requests does not remove scanning costs.
 
-也可保留两次批量查询：
+Alternatively retain two batch queries:
 
 ```sql
 SELECT id, created_at, customer_id
@@ -793,13 +793,13 @@ FROM customer
 WHERE id IN (:customer_id_1, :customer_id_2);
 ```
 
-应用从一页订单提取并去重客户编号，通过驱动按实际数量展开绑定占位符；示例中的两个编号不限定批量大小。用客户编号映射名称，保留订单原顺序和缺失客户，不循环逐单查询；没有有效客户编号时省略第二次请求。
+Extract/deduplicate customer IDs and expand driver-bound placeholders for actual count; two IDs are illustrative, not a batch limit. Map names by ID, retain order sequence and missing customers, and avoid per-order queries. Skip the second request when no valid customer IDs exist.
 
-联表减少往返，但多个订单可能重复传输同一客户资料；两次批量查询可让重复客户只返回一次，代价是增加一次往返，且两次读取不自动保证一致视图。按结果一致性要求、字段大小、重复程度和实际执行成本选择，不要求强行合成一条 SQL；拆分读取的一致性边界见[大字段重复传输](#大字段重复传输)。
+Joins reduce round trips but may repeat customer data. Two batches return each customer once with an extra round trip and no automatic consistent view. Choose by consistency, field size, duplication, and measured cost, not an obligation to use one SQL. See [repeated large-field transfer](#repeated-large-field-transfer) for consistency boundaries.
 
-##### 按编号循环查询改为分组读取
+##### Chunked reads instead of per-ID queries
 
-应用收到订单编号列表，需要取得对应订单。逐个编号查询会产生 N 次请求，可改为一次批量读取：
+For an order-ID list, N individual queries may become one batch:
 
 ```sql
 SELECT id, status, total_amount
@@ -807,40 +807,40 @@ FROM sales_order
 WHERE tenant_id = :tenant_id AND id IN (:order_id_1, :order_id_2);
 ```
 
-`IN` 不保证结果按请求编号顺序返回，也不返回不存在的记录；应用按编号映射后重建原请求顺序，并按接口约定处理缺失编号。若原请求包含重复编号且要求重复返回，应在应用重建结果时保留重复，不能因数据库每行只返回一次而改变契约。
+`IN` guarantees neither input order nor missing records. Map by ID and reconstruct input order, handling missing IDs per contract. If repeated IDs require repeated outputs, preserve repetition when assembling; database row uniqueness must not change the contract.
 
-编号较多或结果包含大字段时，分组批量读取；各组按实际数量绑定参数，不扩大为无范围的查询。批次数增加请求次数，但可控制单次参数量、返回量和应用内存。分组读取不自动提供跨请求的一致视图，也不设统一分组大小。
+Chunk large lists or large-field results, binding actual group sizes without broad unscoped queries. More batches add requests but control parameters, result size, and memory. Chunking guarantees no cross-request consistent view and has no universal size.
 
-#### 数据库侧计算
+#### Database-side computation
 
-对应正文[查询优化](../SKILL.md#查询优化)中的“数据库侧计算”。以下示例分别减少读取请求或明细传输，不代表数据库不再需要计算和访问数据。
+Corresponding rule under [query optimization](../SKILL.md#query-optimization). These examples reduce read requests or detail transfer, not the database's need to access and compute data.
 
-##### 原子自增：减少往返并避免丢失更新
+##### Atomic increment: fewer round trips without lost updates
 
-假设 `counter.a` 非空，初值为 2，两次加 1 均不会溢出。先读后由应用写回需要两次业务语句请求：
+Assume nonnull `counter.a` starts at 2 and two increments cannot overflow. Read-then-write requires two business statements:
 
 ```sql
 SELECT a FROM counter WHERE id = :id;
--- 应用读到 2，计算 new_value = 3
+-- Application reads 2 and computes new_value = 3
 UPDATE counter SET a = :new_value WHERE id = :id;
 ```
 
-上例为反例，查询放在显式事务之外仍不能消除竞争：
+This is a counterexample: putting reads outside explicit transactions does not remove the race:
 
-| 步骤 | 请求 A | 请求 B |
+| Step | Request A | Request B |
 | --- | --- | --- |
-| 1 | 读到 2 | — |
-| 2 | — | 也读到 2 |
-| 3 | 写回 3 | — |
-| 4 | — | 也写回 3，最终少计一次 |
+| 1 | Reads 2 | — |
+| 2 | — | Also reads 2 |
+| 3 | Writes 3 | — |
+| 4 | — | Also writes 3; one increment is lost |
 
-直接在数据库中更新只需一次业务语句请求：
+Direct database updates need one business-statement request:
 
 ```sql
 UPDATE counter SET a = a + 1 WHERE id = :id;
 ```
 
-A、B 都执行成功且没有其他修改时，累计得到 4，不将应用之前读到的值覆盖回去。若业务还要求不得超过上限，应同时校验：
+If both succeed without other changes, the total becomes 4 without overwriting from an earlier application read. For an upper limit, validate in the same statement:
 
 ```sql
 UPDATE counter
@@ -848,11 +848,11 @@ SET a = a + 1
 WHERE id = :id AND a < :upper_limit;
 ```
 
-上限为该整数类型可表示的值，且不存在溢出；更新 0 行不得视为加 1 成功。可单条完成时不额外开启显式事务；如需与其他写入共同成功，仍遵循既有事务边界。需要依赖旧值完成复杂计算且 SQL 无法准确表达时，不直接套用自增方案，应按[并发控制](../SKILL.md#并发控制)保护写入。
+The limit must fit the integer type without overflow. Zero updated rows is not success. Do not add explicit transactions for single-statement operations; preserve existing boundaries when other writes must succeed together. For old-value-dependent calculations not accurately expressible in SQL, use [concurrency control](../SKILL.md#concurrency-control), not blind substitution of increment patterns.
 
-##### 数据库侧聚合减少明细传输
+##### Database aggregation reduces detail transfer
 
-假设需要查询某租户内某客户的累计订单金额，统计范围包含该客户全部状态的订单，`total_amount` 为非空精确金额。先读取明细再在应用累加：
+Suppose a tenant customer's cumulative order amount includes every state and nonnull exact `total_amount`. Read details and sum in application:
 
 ```sql
 SELECT total_amount
@@ -860,7 +860,7 @@ FROM sales_order
 WHERE tenant_id = :tenant_id AND customer_id = :customer_id;
 ```
 
-可评估改为数据库聚合：
+Evaluate database aggregation instead:
 
 ```sql
 SELECT customer_id, SUM(total_amount) AS total_amount
@@ -869,17 +869,17 @@ WHERE tenant_id = :tenant_id AND customer_id = :customer_id
 GROUP BY customer_id;
 ```
 
-两种方式都可用一次请求；优化的是减少返回的明细数据和应用累加、内存开销，而不是减少请求次数。数据库仍需处理匹配记录，计算负载转移到数据库，须结合访问路径与并发负载验证。
+Both need one request. The benefit is less detail transfer, summation, and application memory, not fewer requests. The database still processes matching rows and takes on computation; assess access paths and concurrent load.
 
-如果业务只统计已完成订单，两种写法都须增加相同的状态条件，不能为改写扩大统计范围。无匹配订单时，带 `GROUP BY` 的查询没有结果行；不能未经业务定义就当成零。有多币种时须按业务口径分开计算或转换，不能直接跨币种相加。
+If only completed orders count, add the same state predicate to both versions without widening scope. No matches yields no grouped result row, not automatically zero. Multiple currencies require business-defined separation or conversion, not direct summation.
 
-以上查询和更新方案先按[执行计划与性能验证](../SKILL.md#执行计划与性能验证)判定复杂性；需要专项验证时，比较实际请求次数、完整读取及计算的端到端耗时、数据库工作量与资源占用；减少往返或传输量不自动代表整体更快。示例未在真实 MySQL 中实测，不在显式事务内执行查询。
+Classify under [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification). If needed, compare requests, full-read/computation latency, database work, and resources. Fewer round trips/bytes does not guarantee faster overall execution. Examples are not measured on real MySQL; queries stay outside explicit transactions.
 
-#### 多路明细关联
+#### Multiple detail joins
 
-假设订单 1001 有两条商品明细，成交单价均为 10 元、数量均为 1；另有两条成功支付记录，金额分别为 5 元和 15 元。需要分别统计商品总金额和成功支付总金额，两者都应为 20 元。
+Assume order 1001 has two items, each quantity 1 and unit price 10 yuan, plus successful payments of 5 and 15 yuan. Independent item/payment totals should each be 20 yuan.
 
-直接关联两组明细后再累计是反例：
+Directly joining both detail sets before summing is a counterexample:
 
 ```sql
 SELECT o.id,
@@ -893,18 +893,18 @@ WHERE o.id = :order_id
 GROUP BY o.id;
 ```
 
-绑定 `:order_id = 1001`，两条商品明细分别与两条支付记录组合，生成四行：
+With `:order_id = 1001`, two items combine with two payments into four rows:
 
-| 商品明细 | 商品金额 | 支付记录 | 支付金额 |
+| Item | Item amount | Payment | Payment amount |
 | --- | ---: | --- | ---: |
 | I1 | 10 | P1 | 5 |
 | I1 | 10 | P2 | 15 |
 | I2 | 10 | P1 | 5 |
 | I2 | 10 | P2 | 15 |
 
-两项累计都变成 40 元。问题来自记录组合放大，不是缺少去重函数；`SUM(DISTINCT i.quantity * i.unit_price)` 又会把两个合法的 10 元合成一次，得到错误的 10 元。
+Both totals become 40. Row multiplication is the cause, not a missing deduplication function. `SUM(DISTINCT i.quantity * i.unit_price)` incorrectly merges two legitimate 10-yuan items into 10.
 
-本例两项统计相互独立，分别按订单聚合，再关联每组至多一行的结果：
+These totals are independent: aggregate by order separately, then join at-most-one-row results:
 
 ```sql
 SELECT o.id, COALESCE(i.item_total, 0) AS item_total,
@@ -925,15 +925,15 @@ LEFT JOIN (
 WHERE o.id = :order_id;
 ```
 
-结果恢复为商品总金额 20 元、成功支付总金额 20 元，且不生成两组明细的笛卡尔组合。此处业务规定无对应明细时金额为零，才使用 `COALESCE`；失败支付不参与成功支付统计，过滤条件在改写前后保持一致。
+Totals return to 20 each without Cartesian detail combinations. `COALESCE` applies only because this business defines missing details as zero. Failed payments remain excluded in both versions.
 
-本例仅统计一笔订单，因此两组聚合都限定 `order_id`；批量查询时按所需订单范围聚合，不机械地先统计整张明细表。如果业务要求按某条商品明细与其对应支付分摊关系统计，应按真实关系关联，不能用本例的两个独立总额代替。
+Both aggregations restrict `order_id` because only one order is needed. For batches, aggregate required orders rather than the entire detail table mechanically. If item/payment allocation relationships matter, join actual relationships; independent totals are no substitute.
 
-#### 联表分页
+#### Pagination with joins
 
-假设列表按“订单”分页，每页最多 20 笔，同时返回每笔订单的全部明细；`sales_order.id`、`order_item.id` 分别为各表主键，订单创建时间非空。
+Assume pagination by order, at most 20 per page, with all items returned. `sales_order.id` and `order_item.id` are primary keys and order creation times are nonnull.
 
-以下反例对关联行分页：
+This counterexample paginates joined rows:
 
 ```sql
 SELECT o.id, o.created_at, i.id AS item_id, i.product_id, i.quantity
@@ -944,9 +944,9 @@ ORDER BY o.created_at DESC, o.id DESC, i.id ASC
 LIMIT 20;
 ```
 
-如果最新一笔订单有 30 条明细，结果只含这笔订单的前 20 条明细：既不是 20 笔订单，也没有返回该订单的完整明细。
+If the newest order has 30 items, only its first 20 are returned: neither 20 orders nor a complete order.
 
-先按订单取得一页主记录，再读取完整明细：
+Page primary orders first, then retrieve all items:
 
 ```sql
 SELECT o.id, o.created_at, i.id AS item_id, i.product_id, i.quantity
@@ -961,9 +961,9 @@ LEFT JOIN order_item AS i ON i.order_id = o.id
 ORDER BY o.created_at DESC, o.id DESC, i.id ASC;
 ```
 
-内层最多选出 20 笔订单，外层结果可能超过 20 行，以保留全部明细；没有明细的订单也由 `LEFT JOIN` 保留。外层不再使用 `LIMIT 20`，并显式给出订单与明细顺序。
+The inner query selects at most 20 orders; the outer may exceed 20 rows to retain all items, including empty orders via `LEFT JOIN`. Do not add outer `LIMIT 20`; explicitly order orders and items.
 
-如果需求增加“只展示包含指定商品的订单”，必须在内层取页前落实条件：
+If requiring orders containing a specified product, enforce it inside before pagination:
 
 ```sql
 SELECT o.id, o.created_at, i.id AS item_id, i.product_id, i.quantity
@@ -982,13 +982,13 @@ LEFT JOIN order_item AS i ON i.order_id = o.id
 ORDER BY o.created_at DESC, o.id DESC, i.id ASC;
 ```
 
-外层仍返回入选订单的全部明细，而不是只返回匹配商品的明细；两者是不同业务需求。若先取任意 20 笔订单再筛商品，可能丢失本应入页的订单或使页面不足。
+The outer query still returns all items of selected orders, not only matching-product items: these are different requirements. Filtering after an arbitrary 20 orders can omit eligible orders or underfill pages.
 
-排序依赖明细时也一样。例如按商品明细总金额排序，须先在候选订单范围内算出每笔订单的总金额，以“总金额、订单主键”排序取页，再读取完整明细；不能先按创建时间取 20 笔，再在这 20 笔内按总金额重排。明细查询可评估 `(order_id)`、商品存在性查询可评估 `(order_id, product_id)` 等索引，复杂 SQL 按实际计划验证，不要求全部建立。
+Likewise for detail-dependent ordering: compute totals across candidate orders, page by total plus order primary key, then retrieve all items. Do not choose 20 by creation time then reorder only those by amount. Evaluate `(order_id)` for details or `(order_id, product_id)` for existence; verify complex plans without requiring every candidate index.
 
-#### 大字段重复传输
+#### Repeated large-field transfer
 
-假设订单有 `description TEXT` 和 `extension JSON`，每笔订单关联多条商品明细。一页订单已按完整条件确定，单次查询如下：
+Assume orders have `description TEXT` and `extension JSON`, with multiple items. A page selected by complete criteria is read in one query:
 
 ```sql
 SELECT o.id, o.created_at, o.description, o.extension,
@@ -1004,7 +1004,7 @@ LEFT JOIN order_item AS i ON i.order_id = o.id
 ORDER BY o.created_at DESC, o.id DESC, i.id ASC;
 ```
 
-若一笔订单有 30 条明细，同一份说明文本和 JSON 会随 30 条结果重复传输。可评估拆为两个批量查询，第一条读取一页订单及其大字段：
+An order with 30 items repeats its description/JSON in 30 rows. Evaluate two batch queries; first read orders with large fields:
 
 ```sql
 SELECT id, created_at, description, extension
@@ -1014,7 +1014,7 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-第二条按实际返回的订单编号一次读取所有明细：
+Then read all items for actual returned order IDs:
 
 ```sql
 SELECT order_id, id AS item_id, product_id, quantity
@@ -1023,25 +1023,25 @@ WHERE order_id IN (:order_id_1, :order_id_2)
 ORDER BY order_id ASC, id ASC;
 ```
 
-上例用两个编号示意，实际按返回数量通过驱动展开绑定占位符；没有订单时不执行第二条。应用以 `order_id` 组织明细，并保留第一条的订单顺序及空明细集合，不为每笔订单分别发起查询。
+Two IDs illustrate driver expansion to actual counts; skip query two for no orders. Group items by `order_id`, retaining order sequence and empty collections without per-order queries.
 
-该方案减少大字段重复传输，但增加一次数据库往返，并可能读到不同时刻的数据：第一次读到旧订单说明，第二次却读到更新后的明细。
+This reduces repeated transfer but adds a round trip and may mix times: old description with newer items.
 
-若需要一致视图，可使用满足目标隔离级别一致读要求的单条关联查询，并验证传输成本；不能为拆分读取而在显式事务内执行多次查询。另一种可选方案是校验整个订单及明细的版本：
+If a consistent view is required, use one join meeting the target isolation level's consistent-read requirements and assess transfer costs. Do not put multiple split reads inside explicit transactions. Alternatively validate a whole-order/items version:
 
-使用前提：所有订单内容或明细的变更都须与所属订单的整数版本标识 `content_revision` 递增在同一写事务中提交；新订单初始化版本，删除订单后原标识不复用，版本也不回退或复用。以下读取均使用同一主库的自动提交一致读，不混用缓存或异步副本。
+Prerequisites: every order-content/item change commits with incrementing the owning order's integer `content_revision` in the same write transaction. Initialize versions for new orders; never reuse deleted IDs or roll back/reuse versions. All following reads are autocommit consistent reads from the same primary, not caches or asynchronous replicas.
 
-1. 读取一页订单，同时取得每笔订单的版本标识。
-2. 按入选订单编号批量读取明细。
-3. 批量重读这些订单的版本标识；所有入选订单的前后版本均相同且记录仍存在时才组合结果。任一版本不同或记录消失时丢弃该批结果，按业务要求重新读取或报告变化。
+1. Read the order page including each version.
+2. Batch-read items by selected IDs.
+3. Batch-reread versions. Assemble only if all selected orders still exist with identical versions. Otherwise discard the batch and reread or report changes as required.
 
-该校验覆盖已选订单及其明细，不检测新订单进入筛选范围，也不保证分页集合在后续读取时仍是最新一页。若需求要求重新确定最新入选集合，应重新执行完整筛选。
+This validates selected orders/items, not new orders entering the filter or whether the page remains latest. Rerun complete selection if the latest set must be established.
 
-此版本方案只是需要严格校验时的一种选择，不要求所有表新增版本字段，也不替代既有业务字段优先的写入规则。订单的 `updated_at` 不能自动覆盖明细变更，不能仅凭它前后相同就承诺整个订单及明细的严格一致视图。拆分前需同时权衡重复传输、额外往返和一致性维护成本。
+This version strategy is optional for strict validation, not a mandate for version columns everywhere or a replacement for business-field-first writes. Order `updated_at` does not automatically cover item changes and cannot alone guarantee a consistent order/items view. Weigh transfer, extra round trips, and consistency-maintenance costs before splitting.
 
-#### 大字段延后读取
+#### Deferred large-field reads
 
-假设只按租户、状态筛选，按创建时间及主键排序；文本说明和扩展 JSON 不参与筛选或排序。直接查询为：
+Assume filtering only by tenant/state and sorting by creation time/key; descriptions and JSON do not participate. Direct query:
 
 ```sql
 SELECT id, created_at, description, extension
@@ -1051,7 +1051,7 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-可评估先仅取得主键和排序键，再关联读取大字段：
+Evaluate selecting only IDs/sort keys first, then joining large fields:
 
 ```sql
 SELECT o.id, o.created_at, o.description, o.extension
@@ -1066,11 +1066,11 @@ JOIN sales_order AS o ON o.id = page.id
 ORDER BY page.created_at DESC, page.id DESC;
 ```
 
-候选索引 `(tenant_id, status, created_at, id)` 可支持内层所需字段，避免在内层显式携带大字段；外层再读取目标记录。这只能减少不必要的大字段读取或中间结果携带，不能仅凭改写后的 SQL 认定更快：原查询可能已采用高效访问路径，改写也会增加派生表与关联开销。
+Candidate `(tenant_id, status, created_at, id)` covers inner fields without explicitly carrying large values; the outer retrieves target records. This may reduce unnecessary reads/intermediate data, but the original may already be efficient and derived-table/join costs may increase. Rewriting alone proves no speedup.
 
-若需按 JSON 中某个属性过滤，或按说明内容分组，相关表达式就属于取页或聚合的必要条件，不能推迟到已经选定记录之后再处理。
+If filtering JSON properties or grouping by description, these are necessary page/aggregation conditions and cannot be deferred until after selection.
 
-去重也不能随意改成只处理主键。假设两笔订单的 `description` 都是“送货前联系”，原需求返回不同的说明内容：
+Deduplication cannot arbitrarily switch to IDs. Suppose two orders share description "Contact before delivery" and distinct descriptions are required:
 
 ```sql
 SELECT DISTINCT description
@@ -1078,7 +1078,7 @@ FROM sales_order
 WHERE tenant_id = :tenant_id AND status = :status;
 ```
 
-以下改写是反例：
+This rewrite is a counterexample:
 
 ```sql
 SELECT o.description
@@ -1090,38 +1090,38 @@ FROM (
 JOIN sales_order AS o ON o.id = chosen.id;
 ```
 
-原查询按说明内容去重，本例只返回一条相同文本；反例按本就唯一的订单主键“去重”，仍返回两条相同文本，改变了结果语义。若业务需要按大字段去重或分组，应保留对应比较语义，不能仅为缩小中间结果将其删除。
+The original deduplicates descriptions into one row; the counterexample deduplicates already-unique IDs and returns the same text twice. Preserve large-field comparison semantics for deduplication/grouping rather than dropping them to shrink intermediates.
 
-以上改写先核对结果，再按正文的[执行计划与性能验证](../SKILL.md#执行计划与性能验证)判定复杂性；需要专项验证时，比较关联中间行数、扫描、排序及临时表、大字段传输量、完整读取耗时和应用内存开销，不仅按最终返回行数判定收益。
+Check results first, then classify under [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification). If needed, compare intermediate join rows, scans, sorts/temp tables, large-field bytes, full-read time, and application memory, not final row count alone.
 
 
-### 写入优化
+### Write optimization
 
-对应规则：[写入优化](../SKILL.md#写入优化)。
+Corresponding rules: [write optimization](../SKILL.md#write-optimization).
 
-#### 批量写入
+#### Batch writes
 
-假设应用已在事务外完成查询、校验及参数准备，需要向 InnoDB 表批量写入数据。以下省略无关必填字段，所有数据值由驱动绑定；单记录的计算更新另见[原子自增](#原子自增减少往返并避免丢失更新)。
+Assume queries, validation, and parameters are prepared outside transactions for InnoDB batch writes. Omit unrelated required fields and bind all values. See [atomic increment](#atomic-increment-fewer-round-trips-without-lost-updates) for single-record calculations.
 
-##### 多行插入减少请求往返
+##### Multi-row inserts reduce round trips
 
-若每条语句单独发送，下面两条插入需要两次请求：
+Two separately sent statements need two requests:
 
 ```sql
 INSERT INTO sales_order (id, status) VALUES (:id_1, :status_1);
 INSERT INTO sales_order (id, status) VALUES (:id_2, :status_2);
 ```
 
-合并为一条多行插入，可用一次请求传递两条记录：
+Combine into one multi-row insert carrying both records in one request:
 
 ```sql
 INSERT INTO sales_order (id, status)
 VALUES (:id_1, :status_1), (:id_2, :status_2);
 ```
 
-收益是减少请求往返及重复的语句处理开销，不是减少必须写入的数据量或索引维护工作。驱动的“批量”接口可能生成多行语句，也可能逐条执行，应核对实际执行方式；比较时保持事务提交方式一致，避免把减少提交次数的收益混为语句合并的收益。
+Benefits are fewer round trips and repeated statement processing, not less data or index maintenance. Driver batch APIs may generate multi-row SQL or execute individually; inspect actual behavior. Compare with identical commit strategy to separate statement-merging gains from fewer commits.
 
-若同时写入文本和 JSON：
+For text and JSON:
 
 ```sql
 INSERT INTO sales_order (id, status, description, extension)
@@ -1129,11 +1129,11 @@ VALUES (:id_1, :status_1, :description_1, :extension_1),
        (:id_2, :status_2, :description_2, :extension_2);
 ```
 
-相同行数可能产生远大于短记录的传输量和处理成本。批量过大可能增加单次耗时、客户端和数据库的资源占用，并触及客户端、驱动或服务器的通信包等限制。示例中的两行不是推荐批量；按实际字段大小和并发负载测量吞吐量、语句及事务耗时、其他请求延迟，再确定批量大小。
+The same row count can transmit/process far more than short records. Oversized batches increase latency/resources and may hit client, driver, or server packet limits. Two rows is illustrative, not recommended. Measure throughput, statement/transaction times, and other-request latency for actual sizes and concurrency before choosing.
 
-##### 同类更新替代循环写入
+##### Set-based updates instead of loops
 
-假设两个计数器各需加 1，字段非空、更新不会溢出，且每个目标编号只应更新一次。循环执行两次单记录更新，可评估合并为：
+Assume two nonnull counters each increment once without overflow and each ID should update only once. Evaluate replacing two individual updates with:
 
 ```sql
 UPDATE counter
@@ -1141,45 +1141,45 @@ SET a = a + 1
 WHERE id IN (:id_1, :id_2);
 ```
 
-这将两次业务语句请求合成一次，但仍需更新所有匹配记录和相关索引；不能因只发一次请求而忽略锁范围及执行时间。核对影响行数是否满足任务预期；若目标必须全部存在，须在显式事务内执行该更新，影响行数等于去重后的目标编号数才提交，否则整体回滚；自动提交后再检查行数无法撤销已成功的部分更新。
+This merges two requests but still updates all matching rows/indexes; consider locks and time. Check expected affected counts. If every target must exist, use an explicit transaction and commit only when count equals deduplicated IDs; otherwise roll back all. Post-autocommit checking cannot undo partial updates.
 
-如果原输入是 `[1, 1, 2]`，循环会对记录 1 加两次、记录 2 加一次，而 `IN (1, 1, 2)` 每条匹配记录只更新一次；不得直接合并而改变结果。应先明确重复编号的业务含义，再保留累计次数或去重，不能假定两种方式等价。
+For input `[1, 1, 2]`, loops increment 1 twice and 2 once, while `IN (1, 1, 2)` updates each once. Establish duplicate-ID meaning and preserve multiplicities or deduplicate accordingly; do not assume equivalence.
 
-不同记录需要不同更新条件、处理次序或失败语义时，不强行套用同一集合更新。目标较多时按参数大小、执行耗时和锁等待分组；分组减少单次资源压力，却增加请求次数，必要写入的事务边界仍须保持。
+Do not force one set update when rows require different predicates, order, or failure semantics. Chunk by parameter size, runtime, and lock waits for large targets; chunking reduces per-request pressure but adds requests. Preserve necessary transaction boundaries.
 
-异步并发发送逐条写入可能隐藏部分等待时间，但没有减少实际请求次数，还可能增加数据库压力，不能以“并发发送”代替批量方案的成本验证。
+Concurrent individual writes may hide waiting but do not reduce requests and may raise database load. Concurrency is no substitute for validating batch costs.
 
-##### 分批提交缩短持锁时间的代价
+##### Costs of committing batches to shorten lock duration
 
-假设任务包含批次 A、B：
+Assume batches A and B:
 
-| 方式 | 执行流程 | 收益与代价 |
+| Method | Flow | Benefits and costs |
 | --- | --- | --- |
-| 同一事务内拆语句 | 开始事务 → 插入 A → 插入 B → 提交 | 单条语句变小，但 A 的写锁可能持续到最终提交；不能据此声称已缩短整个事务的持锁时间 |
-| 每批独立提交 | 开始事务 → 插入 A → 提交；另开事务 → 插入 B → 提交 | A 提交后可释放其事务持有的锁，可能减少其他请求等待；但增加提交次数，并允许前批成功、后批失败 |
+| Split statements within one transaction | Begin → insert A → insert B → commit | Smaller statements; A's locks may last to final commit, so overall lock duration is not necessarily shorter |
+| Independent batch commits | Begin → insert A → commit; begin → insert B → commit | A's transaction locks can release earlier, potentially reducing waits, but adds commits and permits partial success |
 
-每批独立提交可能改善并发请求的等待时间，却不保证整个任务更快；提交次数、每批大小和竞争程度都会影响结果。按业务是否允许部分完成决定能否拆分事务，不为缩短持锁时间擅自改变成功条件。
+Independent commits may improve other requests' waits without speeding the whole task. Commit count, batch sizes, and contention matter. Split only if partial completion is allowed; do not change success conditions merely to shorten locks.
 
-例如，一笔订单及全部初始明细要求整体成功时，明细可以拆成多条多行插入语句，但仍在同一连接、同一事务内执行；任一必要写入失败则整体回滚。各批可以独立成立的导入，才可评估分批提交，接受后批失败不撤销已提交前批的结果。
+An order plus all initial items requiring atomic success may use several multi-row statements but must retain one connection/transaction and roll back all on failure. Independently valid imports may evaluate batch commits, accepting that later failures do not undo earlier commits.
 
-先按正文的[执行计划与性能验证](../SKILL.md#执行计划与性能验证)判定复杂性；需要专项验证时，比较语句合并前后的请求次数和吞吐量，以及允许拆分事务时的提交成本、持锁时间和并发等待。以上为收益与代价分析，未在真实 MySQL 中实测，不承诺扩大批量或分批提交必然更快。
+Classify under [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification). If needed, compare requests/throughput and, where transaction splitting is allowed, commit costs, lock duration, and waits. This is analysis, not real-MySQL measurement or a promise larger batches/partial commits are faster.
 
-### 执行计划与性能验证
+### Execution plans and performance verification
 
-对应规则：[执行计划与性能验证](../SKILL.md#执行计划与性能验证)。本节用“复杂 SQL”表示主要成本无法静态可靠判断，不是表示语法长或难读；非复杂 SQL 无须因本规范单独准备性能数据、执行计划或压测。
+Corresponding rules: [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification). Complex means major costs cannot reliably be inferred statically, not long/difficult syntax. Non-complex SQL requires no dedicated performance data, plans, or load tests under this specification.
 
-#### 复杂 SQL 判定
+#### Classifying complex SQL
 
-以下判断以已知表结构和索引为前提，不将行数有界等同于所有情况下耗时恒定：若返回字段、执行逻辑或已知负载引入其他未决成本，需重新判定。
+Assume known schema/indexes; bounded row counts do not imply constant time in all conditions. Reclassify if fields, execution logic, or known load introduce other uncertain costs.
 
-| 示例 | 已知前提 | 判断依据 | 是否专项验证 |
+| Example | Known conditions | Reasoning | Dedicated verification? |
 | --- | --- | --- | --- |
-| A：主键读取 | `sales_order.id` 为主键，只读固定范围的短字段 | 至多一行，无聚合、排序或大字段读取 | 无需 |
-| B：主键读取后关联客户 | A 的前提成立，`customer.id` 为主键，客户名称长度受限 | 至多一笔订单、至多一个客户，不放大行数 | 无需 |
-| C：状态与时间筛选后取 20 条 | 有多种候选索引，但实际状态分布及其与时间的相关性未知 | 不同参数可能改变访问路径，返回 20 条不能确定扫描量 | 需要 |
-| D：多路明细统计后排序 | 每笔订单的明细数、支付次数及租户订单量无可靠边界 | 中间关联行数、聚合去重和排序成本依赖数据 | 需要 |
+| A: primary-key read | `sales_order.id` primary; fixed short fields | At most one row; no aggregation/sort/large fields | No |
+| B: primary-key read joined to customer | A plus primary `customer.id` and bounded name length | At most one order/customer, no row multiplication | No |
+| C: status/time filter, latest 20 | Multiple indexes; unknown state/time distribution and correlation | Parameters may change access path; 20 returned rows does not bound scans | Yes |
+| D: multi-detail counts and sort | No reliable bound on items, attempts, or tenant orders | Intermediate joins, aggregation/deduplication, and sorting depend on data | Yes |
 
-##### A：主键定位普通记录
+##### A: ordinary record by primary key
 
 ```sql
 SELECT id, status
@@ -1187,9 +1187,9 @@ FROM sales_order
 WHERE id = :order_id;
 ```
 
-主键精确定位且返回短字段，表有百万行并不改变至多匹配一行的边界。本例不要求专门执行 `EXPLAIN` 或压测；保留正常的存在性、状态等正确性检查。
+Exact primary-key access to short fields matches at most one row even in a million-row table. No dedicated `EXPLAIN` or load test is required here; keep ordinary existence/state correctness checks.
 
-##### B：有唯一边界的联表
+##### B: join with unique bounds
 
 ```sql
 SELECT o.id, o.status, c.name AS customer_name
@@ -1198,9 +1198,9 @@ LEFT JOIN customer AS c ON c.id = o.customer_id
 WHERE o.id = :order_id;
 ```
 
-订单和客户都通过主键定位，联表本身不构成需要专项验证的理由；缺失客户由 `LEFT JOIN` 保留订单并返回 `NULL` 名称。若新增一对多关联或不受控的大字段，不沿用本例结论。
+Both order/customer use primary keys; a join alone does not justify dedicated verification. `LEFT JOIN` retains missing-customer orders with `NULL` names. Reconsider if adding one-to-many joins or unbounded large fields.
 
-##### C：短 SQL 也可能依赖真实数据
+##### C: short SQL can depend on actual data
 
 ```sql
 SELECT id, created_at
@@ -1211,11 +1211,11 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-假设已有 `(tenant_id, status)` 和 `(tenant_id, created_at, id)` 两个普通索引：前者按租户和状态缩小范围后还需处理时间过滤及排序，后者可按时间顺序读取但需过滤状态。哪条路径更省，取决于状态频率、时间范围及二者的相关性；不凭 SQL 简短或 `LIMIT 20` 判定成本可控。
+Assume ordinary `(tenant_id, status)` and `(tenant_id, created_at, id)`. The first narrows tenant/state but still handles time/order; the second reads time order but filters state. Relative cost depends on frequency, range, and correlation; short SQL or `LIMIT 20` does not establish bounded cost.
 
-这里明确假设分布未知且多个路径存在取舍；若其他索引或可靠业务边界已消除此不确定性，应按实际情况重新判定，不把该查询语法永久列为复杂。
+Unknown distribution and competing paths are explicit assumptions here. Reclassify if another index or reliable business bound removes uncertainty; this syntax is not permanently complex.
 
-##### D：多路关联、去重计数与汇总排序
+##### D: multiple joins, distinct counts, and aggregate ordering
 
 ```sql
 SELECT o.id,
@@ -1230,26 +1230,26 @@ ORDER BY item_count DESC, o.id DESC
 LIMIT 20;
 ```
 
-假设各表 `id` 为主键，需求统计每笔订单的商品明细条数和全部支付尝试次数，并按商品明细条数排序。`COUNT(DISTINCT 主键)` 在本例按身份计数，可避免重复计数，但不能消除两组明细关联产生的中间组合。
+Assume primary `id` in each table; count items and all payment attempts per order, ordered by item count. `COUNT(DISTINCT primary_key)` counts identities without duplicate counts but does not remove intermediate combinations.
 
-候选订单数、每笔明细数和支付次数没有可靠边界时，仅知道表结构仍不能确定实际工作量；需要检查关联放大、去重和排序成本。可参考[多路明细关联](#多路明细关联)评估分别聚合再关联，但不能仅凭改写认定性能通过。本例不使用 `SUM(DISTINCT 金额)`，不能将按唯一身份计数推广为金额去重。
+Without reliable order/item/attempt bounds, schema alone cannot establish work. Inspect join multiplication, deduplication, and sorting. Evaluate independent aggregation under [multiple detail joins](#multiple-detail-joins), but rewriting does not prove performance. This does not use `SUM(DISTINCT amount)`; identity-based counting does not generalize to monetary deduplication.
 
-#### 依赖真实数据的验证过程
+#### Verification using actual data
 
-以示例 C 为对象，先确定“不同状态和时间范围下，哪条访问路径扫描更少、能否达到业务性能目标”，再按该不确定性选择数据和参数：
+For example C, ask which path scans less across states/time ranges and meets business targets, then choose data/parameters for that uncertainty:
 
-| 参数场景 | 数据与参数准备 | 关注的不确定性 |
+| Parameter scenario | Preparation | Uncertainty |
 | --- | --- | --- |
-| 稀有状态 | 使用低区分度示例中的待处理状态，覆盖有结果和无结果的时间范围 | 少量状态记录是否更适合按状态定位，空结果是否仍有大量扫描 |
-| 常见状态 | 使用已完成状态，分别覆盖较短和较长的业务时间范围 | 时间范围内需读取多少记录，过滤和排序各占多少成本 |
-| 状态与时间相关 | 保留待处理订单集中在近期、或目标状态在所查时段稀少等实际分布 | 按时间顺序找目标状态时，取得 20 条前须越过多少记录 |
-| 租户差异 | 选择实际存在的不同订单规模租户 | 同一 SQL 在不同租户参数下，估算及实际扫描量是否明显不同 |
+| Rare state | Pending from low-cardinality example; ranges with and without matches | Whether state access helps and empty results still scan heavily |
+| Common state | Completed, short and long business ranges | Rows read and filter/sort costs |
+| Correlated state/time | Preserve recent pending concentration or sparse states in target periods | Rows crossed before finding 20 matches in time order |
+| Tenant differences | Actual tenants of differing order scales | Estimated/actual scans for different tenant parameters |
 
-使用脱敏副本或代表性构造数据，覆盖需支持的规模和增长范围，保留状态与时间的相关性；均匀随机填充可能掩盖这些差异。
+Use redacted copies or representative synthetic data covering supported scale/growth while preserving state/time correlation. Uniform random data can hide these differences.
 
-所有查询均在显式事务之外执行：
+Run all queries outside explicit transactions:
 
-1. **查看估算计划**：对上述参数场景执行 `EXPLAIN`，观察索引、过滤及排序方式和估算行数。
-2. **核对实际执行**：评估执行成本及副作用后，按需执行受支持语句的 `EXPLAIN ANALYZE`，核对实际行数、循环次数和耗时，并结合实际指标检查扫描、回表及排序成本。最终返回 20 行不是总处理量，节点每次循环的平均行数也不是全部循环总量。
-3. **测量完整路径**：由实际驱动完整读取结果，记录请求次数和端到端耗时；比较联表、批量查询或应用计算时，纳入传输、组装及计算过程，仅关键并发路径补充负载验证。
-4. **限定结论**：若只完成静态计划分析或小规模测试，说明尚未验证的真实负载范围，不写“实际负载验证通过”。
+1. **Inspect estimated plans**: run `EXPLAIN` for these scenarios; inspect indexes, filtering, ordering, and estimates.
+2. **Check actual execution**: after assessing cost/effects, use supported `EXPLAIN ANALYZE` as needed for actual rows, loops, and time, plus metrics for scans/lookups/sorts. Twenty output rows is not total processing, nor are average rows per loop the total across all loops.
+3. **Measure the complete path**: fully read via the actual driver, recording requests and end-to-end time. Include transfer, assembly, and computation when comparing joins, batches, or application computation. Add load tests only for key concurrent paths.
+4. **Bound conclusions**: if only static plans or small tests were performed, identify real-load scope still unverified; do not claim actual-load verification passed.

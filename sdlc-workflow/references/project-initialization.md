@@ -1,189 +1,189 @@
-# 项目初始化
+# Project Initialization
 
-## 执行范围与顺序
+## Execution scope and order
 
-- 按用户明确要求执行项目初始化。
-- 按本次授权范围，依次明确项目目标与范围、建立知识库、建立最小可验证工程骨架。
-- 读取适用的项目约定和已有资料。已有项目复用仍适用的知识库、基座、技术栈、架构和工程结构；补齐缺项，仅重新设计不适用部分。
-- 复用已明确或确认的内容，逐项核对未决事项，避免遗漏。按主次和回答难度组织提问，相关次要事项可合并；提供必要说明，便于用户理解和回答。
-- 自行处理授权范围内的常规技术设计、基座、工具和规则选择；超出授权范围、改变需求或需要用户决定的重大取舍，遵循主技能的确认要求。
+- Initialize projects only on explicit user request.
+- Within authorization, establish project goals and scope, then the knowledge base, then a minimal verifiable engineering skeleton.
+- Read applicable conventions and existing materials. Reuse valid knowledge bases, foundations, stacks, architecture, and structure in existing projects; fill gaps and redesign only unsuitable parts.
+- Reuse settled or confirmed information and check unresolved items individually. Organize questions by importance and difficulty, grouping related secondary matters; provide explanations so users can answer.
+- Make routine technical, foundation, tool, and rule decisions within authorization. Follow main-skill confirmation rules for choices exceeding authorization, changing requirements, or involving major user tradeoffs.
 
-## 明确项目目标与范围
+## Establish project goals and scope
 
-- 逐项核对项目使用者、要解决的问题和期望结果。
-- 逐项核对项目职责、能力、覆盖场景和排除项。
-- 从已有需求和资料提炼目标与范围，复用用户已明确提供或确认的内容，不重复提问；按“执行范围与顺序”逐项确认尚未明确的事项。不因部分信息已有结论而跳过其他项，确保上述要素无遗漏。
+- Check project users, problems to solve, and expected outcomes individually.
+- Check responsibilities, capabilities, covered scenarios, and exclusions individually.
+- Extract goals and scope from existing requirements and materials; reuse explicit or confirmed information without asking again. Clarify unresolved matters under Execution scope and order. Do not skip remaining items because some have already been settled; cover all elements above.
 
-## 建立知识库
+## Establish the knowledge base
 
-### 收录要求
+### Required content
 
-- 遵循[项目知识库规范](project-knowledge-base.md)。
-- 收录以下必需内容；按主题确定归属，不要求每项独立成文：
-  - 项目目标与范围：记录逐项核对并确认后的内容；用户已明确提供或确认的内容直接复用。
-  - 知识库目录结构：说明主题划分、文档归属和导航方式。
-  - 技术选型：说明基座及所选技术的用途、理由和约束。
-  - 各技术栈的静态代码检查工具和规则：说明检查覆盖、规则原则、执行入口及配置来源。
-  - 项目目录结构：说明源码、测试、配置、开发工具和生成产物的归属。
-  - 架构职责与依赖边界：说明系统与外部环境的关系、主要模块职责、依赖方向和关键协作，深度与项目复杂度相称。
-  - 许可证与第三方声明机制：简述检查与声明维护机制，并引用工程中的具体实现。
-- 保留已有且仍有效的相关文档。按工程需要处理未单独收录的事项；保留本地部署、必要测试、构建及骨架验证，不自动扩展文档专题。
-- 先将有效设计与约束写入知识库，再实施骨架。
+- Follow [project knowledge-base conventions](project-knowledge-base.md).
+- Include the following required content, grouped by subject rather than necessarily as separate documents:
+  - Project goals and scope, checked individually; reuse explicit or confirmed user information.
+  - Knowledge-base directory structure, subject divisions, ownership, and navigation.
+  - Technology selection: purposes, reasons, and constraints of the foundation and selected technologies.
+  - Static analysis tools and rules for each stack: coverage, rule principles, execution entry points, and configuration sources.
+  - Project directory structure: ownership of source, tests, configuration, development tools, and generated output.
+  - Architecture responsibilities and dependency boundaries: system context, major modules, dependency directions, and collaboration at a depth proportionate to complexity.
+  - Licensing and third-party notices: summarize checking and notice-maintenance mechanisms and reference their actual engineering implementations.
+- Retain valid existing documents. Handle other engineering needs without automatically expanding documentation topics; retain local deployment, necessary tests, builds, and skeleton verification.
+- Record valid design and constraints in the knowledge base before implementing the skeleton.
 
-### 知识库目录结构
+### Knowledge-base directory structure
 
-- 遵循[目录设计原则](project-knowledge-base.md#目录设计原则)和[组织规范](project-knowledge-base.md#组织规范)。依据用户约定和已有布局确定知识库根目录；仍无法确定时，请求用户指定，继续不依赖该位置的准备工作。多产品项目按独立产品组织知识域。
-- 参照以下桌面应用与官网项目的结构示例，按目标项目和本次收录内容裁剪目录与文件。
+- Follow [directory design principles](project-knowledge-base.md#directory-design-principles) and [organization](project-knowledge-base.md#organization). Determine the root from user conventions and existing layout. If still unresolved, ask the user to designate it and continue independent preparation. Organize multi-product projects by independent product knowledge domains.
+- Adapt this desktop-and-website example to the target project and required content:
 
 ```text
-docs/                                           # 知识库根目录示例
-├── index.md                                    # 项目导航与组织约定
-├── desktop/                                    # 桌面产品知识域
-│   ├── ref-product-specification.md            # 产品目标与范围
-│   ├── expl-technical-strategy.md              # 技术选型与架构
-│   ├── ref-product-interface-design-system.md  # 公共视觉规则
-│   ├── brand/identity/                         # 品牌身份
+docs/                                           # Example knowledge-base root
+├── index.md                                    # Navigation and organization
+├── desktop/                                    # Desktop product knowledge
+│   ├── ref-product-specification.md            # Goals and scope
+│   ├── expl-technical-strategy.md              # Stack and architecture
+│   ├── ref-product-interface-design-system.md  # Shared visual rules
+│   ├── brand/identity/                         # Brand identity
 │   │   └── ref-product-logo.md
-│   ├── features/discovery/                     # 发现功能专题
+│   ├── features/discovery/                     # Discovery feature
 │   │   ├── ref-discovery.md
 │   │   ├── expl-discovery-technical-design.md
 │   │   └── howto-accept-github-sources.md
-│   ├── platform/architecture/                  # 跨功能架构约束
+│   ├── platform/architecture/                  # Cross-feature constraints
 │   │   └── ref-feature-boundaries.md
-│   └── delivery/                              # 质量与交付
+│   └── delivery/                              # Quality and delivery
 │       ├── quality/
 │       │   └── howto-run-quality-checks.md
 │       └── release/
 │           ├── ref-quality-and-release.md
 │           └── ref-software-licensing.md
-└── website/                                    # 官网产品知识域
+└── website/                                    # Website product knowledge
     ├── ref-product-specification.md
     ├── expl-technical-strategy.md
     └── delivery/release/
         └── howto-release-website.md
 ```
 
-### 开源基座与技术选型
+### Open-source foundation and technology selection
 
-- 优先查找可复用主要功能或工程结构的成熟开源项目作为基座，避免重复实现已有能力。
-- 核验候选项目的需求适配、成熟度、Star 数、维护活跃度、社区口碑、适配成本和许可证。以需求适配和约束满足为前提，将 Star 数、活跃度和口碑作为辅助依据；不设通用数值门槛。
-- 采用适用基座的技术栈，按项目约束适配。已有项目优先复用满足目标的既有选型。
-- 没有适用基座且用户或项目未指定技术栈时，按项目实际组成优先评估默认技术：桌面端 Tauri、移动端 React Native、前端 React、后端 Go。默认技术不满足需求或约束时，选择适用方案并说明理由。
-- 查阅所选版本的官方资料，核对兼容关系，确定必要的运行时、工具链和配套技术。
-- 在知识库中说明基座、复用部分、技术用途、选择理由和适用约束，引用可核验的来源。
+- Prefer mature open-source projects whose major capabilities or engineering structure can be reused, avoiding duplicate implementation.
+- Verify requirement fit, maturity, stars, maintenance, reputation, adaptation costs, and license. Requirement fit and constraints come first; stars, activity, and reputation are supporting evidence, without universal numeric thresholds.
+- Use a suitable foundation's stack with necessary adaptation. In existing projects, reuse choices meeting current goals first.
+- If no suitable foundation or prescribed stack exists, evaluate defaults for the actual components: Tauri for desktop, React Native for mobile, React for frontend, Go for backend. Choose alternatives with reasons if defaults do not meet constraints.
+- Verify compatibility, runtimes, toolchains, and supporting technologies against official documentation for selected versions.
+- Document foundations, reused parts, technology purposes, reasons, constraints, and verifiable sources.
 
-### 界面规范与品牌标识
+### UI conventions and brand identity
 
-- 项目包含用户界面时，收录公共交互规范与视觉设计系统。复用已明确或确认的设计方向和公共约定，按“执行范围与顺序”逐项确认尚未明确的事项。
-- 按[视觉参考资料](project-knowledge-base.md#视觉参考资料)规则，按需为界面规范与品牌标识补充图片或单页 HTML。
-- 需要选择设计方向时，提供风格相近的流行产品或同领域主流产品供用户选择，也可采用用户提供的示例。核验参考产品与适用场景，用直观例子和易懂表述说明差异；不要用专业术语询问用户。
-- 根据已明确或确认的参考和方向，整理导航、操作反馈、组件、颜色、字体和布局等适用规则。
-- 项目需要对外展示或分发时，收录品牌与产品标识规范。沿用已明确或确认的有效对外名称、标识、使用方向和资产，按“执行范围与顺序”逐项确认尚未明确的事项；整理适用的 Logo、应用图标和资产使用规则。
+- For projects with UI, include shared interaction conventions and a visual design system. Reuse confirmed directions and conventions; clarify unresolved items individually under Execution scope and order.
+- Add images or standalone HTML for UI and brand identity as needed under [visual references](project-knowledge-base.md#visual-references).
+- When a design direction must be chosen, offer popular products with similar styles or leading products in the domain, or use user references. Verify reference applicability and explain differences through intuitive examples rather than asking users in specialist terminology.
+- Organize applicable navigation, feedback, component, color, typography, and layout rules from settled references and direction.
+- For public-facing or distributed projects, include brand and product identity conventions. Reuse valid confirmed names, marks, usage direction, and assets; clarify unresolved matters individually. Organize applicable logo, app-icon, and asset-use rules.
 
-### 项目目录结构
+### Project directory structure
 
-- 按应用或可交付模块划分实现边界；依据架构职责和依赖关系组织内部模块。
-- 多应用项目在根目录维护公共工程声明、治理与编排，将应用实现及专属配置、工具归入所属应用。单应用项目按技术栈惯例保持简洁结构。
-- 仅为实际共享职责建立共享模块，明确归属和依赖方向。
-- 按技术栈惯例组织源码、测试、配置和开发工具；分开管理人工维护文件、构建产物、缓存及验证产物。
-- 根据所选基座和项目需要确定目录名称与层级，不套用固定分层。参照以下结构示例，按目标项目的应用组成和职责裁剪；通过注释说明划分依据。
-
-```text
-project/                         # 多应用项目示例，省略部分文件与目录
-├── package.json                 # 根目录维护公共工程声明与命令编排
-├── docs/                        # 知识库按知识主题组织
-├── apps/                        # 按独立应用和工程职责划分实现边界
-│   ├── desktop/                 # 桌面产品的实现归所属应用
-│   │   ├── src/                 # 界面实现内部继续按职责划分
-│   │   │   ├── app/             # 应用装配与外壳
-│   │   │   ├── features/        # 用户功能模块
-│   │   │   └── shared/          # 实际跨功能共享的通用能力
-│   │   ├── crates/              # 业务核心与 CLI，归所属产品
-│   │   ├── config/              # 应用专属配置
-│   │   └── scripts/             # 应用专属工程工具
-│   ├── website/                 # 官网独立维护自身实现
-│   │   ├── app/                 # 页面入口，遵循所选框架惯例
-│   │   └── src/                 # 官网模块，归所属应用
-│   ├── service/                 # 服务端独立维护自身实现
-│   │   ├── cmd/                 # 服务入口，遵循语言惯例
-│   │   ├── internal/            # 服务内部模块
-│   │   └── environments/        # 服务专属运行环境配置
-│   └── release/                 # 实际跨应用共享的交付职责，按需建立
-│       └── scripts/             # 公共交付工具
-├── target/                      # 构建产物与缓存，按工具链惯例管理
-└── artifacts/                   # 设计与验证产物，与源码分开管理
-```
-
-### 静态代码检查
-
-#### 检查范围与门禁
-
-- 覆盖实际技术栈中的人工维护源码及相关工程配置，复用基座中适用的规则。静态检查包括格式、语法、类型、代码分析及依赖、文档和工程声明的一致性检查；产品行为测试、覆盖率和运行时竞态检测归入测试与验收。
-- 区分生产代码、测试代码、开发工具和生成代码。按类别确定检查范围与门槛；生成代码不参与人工代码的规模指标，仍须通过适用的编译或类型检查。
-- 按技术栈集中维护公共规则，通过项目配置适配编译环境、源码范围和专属架构约束。
-- 自行确定工具、版本、规则及必要例外。为每项明确检查对象、工具、计量口径、阈值、比较关系、失败条件和配置来源；说明不适用项的依据，避免遗漏适用的必需检查。
-- 将精确规则和执行参数集中维护在工程配置或检查实现中，在知识库中说明规则并引用来源。
-- 建立统一静态检查入口，支持必要的项目范围选择，避免重复执行公共步骤。要求阻断违规数量为零，明确警告策略和漏洞阻断等级。
-- 违规达到阻断条件、工具缺失或执行失败、报告无效、应检查源码未被覆盖时，返回非零状态；输出项目、检查步骤和失败原因，不视为检查通过。
-
-#### 必要检查项
-
-- 校验格式、语法、编译或类型正确性，覆盖实际采用的语言及其工程配置。
-- 检查未使用的代码、导出和依赖，未声明的依赖、未处理错误、资源关闭及适用的语言与框架规则。
-- 检查代码规模、复杂度、重复代码、函数签名和接口规模；验证循环依赖、禁止依赖、深层导入、生产代码依赖测试代码及实现越界。
-- 检查密钥泄漏、危险代码模式、生产依赖漏洞、许可证及第三方声明一致性。保留复用代码要求的许可证与版权声明，按实际分发依赖生成或收集第三方声明，在知识库中简述机制。
-- 校验文档格式、导航与链接，工作流语法，以及锁文件、工作区和工具链声明的一致性。
-- 按技术栈选择适用工具，可参考以下组合：
-  - 前端：Prettier、ESLint、TypeScript、Stylelint、Knip、dependency-cruiser，分别负责格式、语言与框架规则、类型、样式、未使用或未声明的代码与依赖、依赖边界。
-  - Rust：rustfmt、Clippy，负责格式、编译静态检查及语言规则。
-  - Go：gofmt、goimports、golangci-lint，负责格式、导入、静态分析、错误处理和资源使用规则。
-- 语言工具未覆盖的必要结构指标，采用适用的语法树检查器；不以正则表达式解析函数或接口。
-
-#### 量化指标
-
-- 设置文件和函数有效行数、包有效行数及目录直接子文件数等规模指标。有效行数排除空行和纯注释行；目录文件数只统计直接子文件，按代码类别分别计数。
-- 按语言能力和模块类型，设置圈复杂度、认知复杂度、语句数、控制流嵌套深度、参数数量、连续同类型参数数量及接口方法数等指标；明确函数计数范围、类型识别规则和嵌入接口的计数方式。
-- 设置重复率和重复块大小。明确按行或词法单元（token）计量、重复率分母和重复块识别条件；区分识别重复块的最小大小与直接阻断的重复块门槛。
-- 设置同目录同类别的重复字符串出现次数；明确纳入统计的字符串范围与排除条件。
-- 记录阻断违规数量、警告策略、漏洞阻断等级及检查覆盖范围；按既定规则判定结果，不将漏检或检查失败记为通过。
-
-#### 参考示例
-
-- 参照以下阈值示例，按目标项目的技术栈、基座和约束确定实际规则。A 表示生产代码，B 表示测试与开发工具；数值按 A/B 顺序列出，保留对应的比较关系。
+- Divide implementation boundaries by application or deliverable module, organizing internals by architectural responsibilities and dependencies.
+- For multi-application projects, keep shared engineering declarations, governance, and orchestration at root; keep implementation and dedicated configuration/tools within each application. Keep single-application structures simple and conventional.
+- Create shared modules only for actual shared responsibilities, with explicit ownership and dependency direction.
+- Organize source, tests, configuration, and development tools by stack conventions; separate maintained files, builds, caches, and verification artifacts.
+- Derive names and levels from the foundation and project, not fixed layering. Adapt this example by applications and responsibilities; explain boundaries in comments.
 
 ```text
-JS/TS：文件有效行数 ≤500/1500；函数有效行数 ≤120/360；目录直接子文件数 ≤16/48
-Rust：文件有效行数 ≤800/2400；函数有效行数 ≤120/360；目录直接子文件数 ≤16/48
-Go：文件有效行数 ≤600/1200；函数有效行数 ≤100/300；包有效行数 ≤1800/5400
-
-三类语言：圈复杂度 ≤15/20；认知复杂度 ≤24/39
-Go：语句数 ≤60/180；控制流嵌套深度 ≤4/6；参数数量 ≤5/8
-Go：连续同基本类型参数数量 ≤2/4；接口方法数（含嵌入）≤8/12
-Go：同目录同类别的重复字符串出现次数 <6/10
-
-JS/TS、Rust：重复行比例 ≤5%/10%；识别重复块至少 60 token、10 行
-Go：重复 token 比例 ≤5%/10%；重复块达到 60/100 token 即失败
+project/                         # Partial multi-application example
+├── package.json                 # Shared declarations and orchestration
+├── docs/                        # Knowledge organized by subject
+├── apps/                        # Application and engineering boundaries
+│   ├── desktop/                 # Desktop product implementation
+│   │   ├── src/                 # UI modules organized by responsibility
+│   │   │   ├── app/             # Assembly and shell
+│   │   │   ├── features/        # User-facing features
+│   │   │   └── shared/          # Actual shared cross-feature capabilities
+│   │   ├── crates/              # Product business core and CLI
+│   │   ├── config/              # Application configuration
+│   │   └── scripts/             # Application engineering tools
+│   ├── website/                 # Independent website implementation
+│   │   ├── app/                 # Framework-conventional page entries
+│   │   └── src/                 # Website-owned modules
+│   ├── service/                 # Independent backend implementation
+│   │   ├── cmd/                 # Language-conventional service entry
+│   │   ├── internal/            # Service internals
+│   │   └── environments/        # Service runtime configuration
+│   └── release/                 # Actual cross-application delivery, if needed
+│       └── scripts/             # Shared delivery tools
+├── target/                      # Conventional builds and caches
+└── artifacts/                   # Design and verification, separate from source
 ```
 
-- 按各语言检查器的计量口径解释示例数值。本示例的前端文件规模检查也覆盖 CSS；函数与复杂度指标按相应语法检查。
-- 本示例中，Rust 生产文件包含内联测试时，文件仍按 A 类 800 行上限检查；测试函数按 B 类 360 行上限检查。
-- 将示例数值仅用于理解指标与门槛；目标项目的精确规则以其工程配置或检查实现为准。
+### Static analysis
 
-## 建立工程骨架
+#### Coverage and gates
 
-### 工程建立
+- Cover maintained source and relevant engineering configuration for actual stacks, reusing foundation rules. Static checks include formatting, syntax, types, analysis, and consistency of dependencies, documents, and declarations. Behavioral tests, coverage, and runtime race detection belong to testing and acceptance.
+- Distinguish production, test, development-tool, and generated code. Define category-specific coverage and gates. Exclude generated code from maintained-code size metrics, but retain applicable compilation/type checks.
+- Centralize shared rules per stack and adapt compilation environment, source scope, and architecture constraints through project configuration.
+- Select tools, versions, rules, and exceptions independently. Specify checked objects, tools, measurement definitions, thresholds, comparisons, failure conditions, and configuration sources. Explain inapplicable items without omitting required applicable checks.
+- Maintain exact rules and parameters in engineering configuration or check implementations; explain principles and link sources in the knowledge base.
+- Provide a unified static-check entry point with necessary project selection, avoiding repeated shared steps. Require zero blocking violations and explicit warning and vulnerability policies.
+- Return nonzero for blocking violations, missing or failed tools, invalid reports, or uncovered required source. Report project, step, and cause; do not call it passed.
 
-- 知识库建立后，按[实施要求](implementation.md)创建或补齐最小工程结构、依赖声明、必要配置、静态检查入口及许可证与第三方声明机制。按授权范围复用基座，完成骨架验证所需的适配，不扩展为完整业务实现。
+#### Required checks
 
-### 本地服务与第三方接入
+- Check formatting, syntax, compilation or types for actual languages and engineering configuration.
+- Check unused code, exports, and dependencies; undeclared dependencies; unhandled errors; resource closure; and applicable language/framework rules.
+- Check size, complexity, duplication, function signatures, and interface size; enforce circular/forbidden dependencies, deep imports, production-to-test dependencies, and implementation boundaries.
+- Check secret leaks, dangerous patterns, production dependency vulnerabilities, licenses, and third-party notices. Retain required licenses and copyright notices for reused code. Generate or collect notices for distributed dependencies and summarize the mechanism in the knowledge base.
+- Validate document formatting, navigation, links, workflow syntax, and consistency among lockfiles, workspaces, and toolchain declarations.
+- Choose tools by stack; possible combinations:
+  - Frontend: Prettier, ESLint, TypeScript, Stylelint, Knip, dependency-cruiser for formatting, language/framework rules, types, styles, unused/undeclared code and dependencies, and dependency boundaries respectively.
+  - Rust: rustfmt and Clippy for formatting, static compilation checks, and language rules.
+  - Go: gofmt, goimports, golangci-lint for formatting, imports, static analysis, error handling, and resource rules.
+- Use suitable syntax-tree tools for necessary structural metrics not covered by language tools; do not parse functions or interfaces with regular expressions.
 
-- 项目包含服务端时，在本地部署服务，保持与目标运行环境等价的业务功能和对外契约。允许采用不同基础设施及部署方式，以降低本地部署难度。
-- 依赖第三方服务时，优先真实调用。先评估真实接入的可行方式；仅在本地接入极其困难时使用模拟实现（mock），例如无法接收服务端回调或必须创建虚拟机。自行判断是否符合使用条件。
-- 使用 mock 时，保持适用的调用约定，说明模拟范围和未真实验证的行为；不将模拟验证记为真实接入通过。
-- 按已确定的需求和约束设计本地部署，不擅自补设生产环境或发布方案。
+#### Quantitative metrics
 
-## 验证与交付
+- Set effective lines per file/function/package and direct files per directory. Exclude blank and comment-only lines; directory counts include direct files only and distinguish code categories.
+- Set cyclomatic and cognitive complexity, statements, nesting depth, parameters, consecutive same-type parameters, and interface method counts according to language and module types. Define function scope, type recognition, and embedded-interface counting.
+- Set duplication ratios and block sizes; define line/token measurement, denominator, and matching conditions. Distinguish minimum detected block size from the directly blocking threshold.
+- Set repeated-string counts within the same directory and category, defining included strings and exclusions.
+- Record blocking counts, warning policy, vulnerability gates, and coverage. Missing checks and failed checks are not passes.
 
-- 按技术栈和目标平台准备依赖与工具链，执行适用的静态检查、必要测试及构建或启动验证；不以配置完成代替验证通过。
-- 根据实际建立和验证结果，校正知识库中的路径、来源引用和实施状态；不将未建立的机制写成已实现。
-- 简述已建立内容、执行入口、验证结果及未完成范围。不自动启动知识库审查。
+#### Reference examples
+
+- Adapt these example thresholds to the target stack, foundation, and constraints. A means production; B means tests/development tools. Values are A/B; retain their comparison operators.
+
+```text
+JS/TS: effective file lines ≤500/1500; function lines ≤120/360; direct files/directory ≤16/48
+Rust: effective file lines ≤800/2400; function lines ≤120/360; direct files/directory ≤16/48
+Go: effective file lines ≤600/1200; function lines ≤100/300; package lines ≤1800/5400
+
+All three: cyclomatic complexity ≤15/20; cognitive complexity ≤24/39
+Go: statements ≤60/180; nesting ≤4/6; parameters ≤5/8
+Go: consecutive same-basic-type parameters ≤2/4; interface methods including embedded ≤8/12
+Go: repeated-string occurrences in same directory/category <6/10
+
+JS/TS, Rust: duplicated-line ratio ≤5%/10%; detection minimum 60 tokens and 10 lines
+Go: duplicated-token ratio ≤5%/10%; blocks reaching 60/100 tokens fail
+```
+
+- Interpret values using each tool's measurement rules. Frontend file-size checks in this example also cover CSS; function and complexity metrics use the relevant syntax.
+- In this example, Rust production files containing inline tests still use the A file limit of 800 lines; test functions use the B limit of 360 lines.
+- These values illustrate metrics and gates only; exact project rules belong in engineering configuration or check implementations.
+
+## Establish the engineering skeleton
+
+### Engineering setup
+
+- After establishing the knowledge base, create or complete minimal structure, dependency declarations, configuration, static-check entry points, and license/third-party-notice mechanisms under [implementation requirements](implementation.md). Reuse foundations within authorization and adapt as needed to verify the skeleton, without expanding into complete business functionality.
+
+### Local services and third-party integration
+
+- For backend projects, deploy locally with business functionality and public contracts equivalent to the target runtime. Infrastructure and deployment may differ to simplify local setup.
+- Prefer actual third-party calls. Evaluate real integration first; use mocks only when local integration is extremely difficult, such as inability to receive server callbacks or a required virtual machine. Judge applicability independently.
+- With mocks, retain applicable call contracts and explain simulated scope and behavior not actually verified. Mock success is not real integration success.
+- Design local deployment for established requirements and constraints; do not invent production or release plans.
+
+## Verification and delivery
+
+- Prepare dependencies and toolchains for the stack and target platform. Run applicable static checks, necessary tests, and build or startup verification; configuration completion is not verification success.
+- Correct knowledge-base paths, source references, and implementation statuses against actual setup and verification. Do not describe unbuilt mechanisms as implemented.
+- Briefly report established components, entry points, outcomes, and unfinished scope. Do not automatically start a knowledge-base audit.

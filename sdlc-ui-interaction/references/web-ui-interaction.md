@@ -1,12 +1,12 @@
-# 网页界面与交互设计原则
+# Web UI and Interaction Design Principles
 
-## 使用方式
+## Usage
 
-- 读取[公共原则](../SKILL.md#公共原则)，按浏览器使用场景选取以下原则。
-- 面向移动浏览器时，同时读取[移动端原则](mobile-ui-interaction.md)；涉及桌面窗口或高频键鼠操作时，再读取[桌面端原则](desktop-ui-interaction.md)。
+- Read the [shared principles](../SKILL.md#shared-principles) and select the following rules for browser usage.
+- For mobile browsers, also read [mobile principles](mobile-ui-interaction.md). For desktop-window behavior or frequent keyboard/mouse usage, also read [desktop principles](desktop-ui-interaction.md).
 
-## 平台原则
+## Platform principles
 
-- **浏览器历史与标签页**：使页面导航符合浏览器后退、前进的预期，保留链接在新标签页打开等原生行为；避免重复或无实际导航意义的历史记录。
-- **响应式布局**：按可用视口和内容重排布局，支持文字缩放及横竖屏切换；仅为确需二维展示的内容提供局部滚动，避免整页横向滚动。
-- **链接与按钮语义**：用原生链接导航到其他位置，用原生按钮执行操作，避免用无交互语义的元素模拟控件。
+- **History and tabs**: make navigation match expectations for browser back and forward. Preserve native behavior such as opening links in new tabs; avoid duplicate or meaningless history entries.
+- **Responsive layout**: reflow for available viewport and content; support text scaling and orientation changes. Allow local scrolling only for content requiring two-dimensional presentation; avoid whole-page horizontal scrolling.
+- **Link and button semantics**: use native links for navigation and native buttons for actions. Do not simulate controls using elements without interaction semantics.

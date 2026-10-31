@@ -1,134 +1,134 @@
-# 知识库审查
+# Knowledge-Base Review
 
-- 将知识库审查限定为系统检查指定范围的内容归属、事实准确性、规范性来源及跨文档一致性；区别于日常更新所需核对。
-- 使用[指令与文档设计原则](../../sdlc-instr-doc-design/SKILL.md)检查内容设计和表达质量，使用[项目知识库规范](project-knowledge-base.md)判定知识库专属要求；本文件规定证据核查与专项审查流程。仅要求表达审查时，不启动本流程。
+- Limit this review to systematic checking of content ownership, factual accuracy, normative sources, and cross-document consistency within the designated scope, distinct from routine update checks.
+- Use [Instruction and Documentation Design Principles](../../sdlc-instr-doc-design/SKILL.md) for content design and expression, and [project knowledge-base conventions](project-knowledge-base.md) for knowledge-base rules. This file defines evidence checking and dedicated review procedures. Do not trigger it for expression review alone.
 
-## 锁定范围
+## Lock the scope
 
-- 按用户指定范围审查：指定项目知识库根目录或子目录时，覆盖该目录及其子目录中的全部 Markdown 文档；指定文档时仅审查指定文档。
-- 将审查目标分批，每批包含 1–3 篇 Markdown 文档。将参与跨文档比较的范围内文档计入目标；禁止借证据读取扩大批次。范围外的证据文档不计入批次数量。
-- 随目标文档检查其引用的图片和单页 HTML；将其作为参考资料，不作为独立文档计入批次。
-- 按需读取并在结论中引用范围外文档作为证据；不将其作为审查目标，也不对其另列审查问题。
-- 根据代码变更反查时，提取变更对象，定位直接引用、行为描述和上层流程文档。
+- Follow the user-designated scope: for a knowledge-base root or subdirectory, cover all Markdown documents recursively; for specified documents, review only those.
+- Divide targets into batches of 1–3 Markdown documents. Count in-scope documents participating in comparisons as targets; do not enlarge batches through evidence reading. Out-of-scope evidence documents do not count toward batch size.
+- Check referenced images and standalone HTML with their target documents as supporting materials, not independent batch documents.
+- Read and cite out-of-scope documents as evidence as needed without treating them as targets or reporting separate issues against them.
+- When tracing from code changes, extract changed objects and locate direct references, behavior descriptions, and higher-level workflow documents.
 
-## 操作边界
+## Operating boundaries
 
-- 仅要求审查时，只报告问题与修订建议，不修改目标文件。
-- 用户已要求审查并修改，或后续给予修订授权时，先形成有证据支持的审查结论，再按[指令与文档设计原则](../../sdlc-instr-doc-design/SKILL.md)逐文档完成修改、对比、融合与验收；不重复请求已有范围的授权。
-- 按[项目知识库规范](project-knowledge-base.md)的“更新与规则变更”和“人工验收”处理确认事项。
+- For review-only requests, report issues and suggestions without editing files.
+- With revision authorization, first reach evidence-supported conclusions, then complete per-document revision, comparison, integration, and acceptance under [Instruction and Documentation Design Principles](../../sdlc-instr-doc-design/SKILL.md). Do not repeat authorization requests within the existing scope.
+- Handle confirmation under Updates and rule changes and Human acceptance in [project knowledge-base conventions](project-knowledge-base.md).
 
-## 判定状态
+## Judgment statuses
 
-- 按声明或检查项记录验证状态：已完成适用检查且证据支持其正确时标为 `通过`；证据确认偏差时标为 `已确认问题`；尚未执行检查时标为 `未验证`；已检查但缺少关键证据、规范性来源未确定或证据冲突时标为 `待确认`。说明待确认原因，不直接判错；不得将部分检查通过汇总为整篇文档通过。
-- 仅在根据代码变更反查文档时，另行记录相关性：将有合理影响线索、尚未证实的声明标为 `候选相关`；将已证实受变更影响的声明标为 `已确认受影响`；将已排除影响的声明标为 `明确无关`。另按验证状态判定声明是否正确；不要将受影响等同于存在错误。
+- Record verification per claim or check: `Passed` when applicable checks are complete and evidence supports correctness; `Confirmed issue` for evidenced deviations; `Unverified` before checks; `Needs confirmation` when checked but key evidence, normative source, or conflict resolution is missing. Explain uncertainty without presuming error. Partial success does not mean the whole document passes.
+- Only when tracing from code changes, record relevance separately: `Potentially related` for plausible but unconfirmed impact; `Confirmed affected` for established impact; `Unrelated` for excluded impact. Judge correctness independently; affected does not mean wrong.
 
-## 判定内容归属
+## Determine content ownership
 
-- 先确定目标文档的目的、主题和职责。
-- 判断声明是否属于目标文档职责。
-- 对职责外声明报告内容归属问题。不要先与代码比较。
-- 不要将非穷举示例按完整清单校验。
+- Establish document purpose, subject, and responsibility first.
+- Determine whether a claim belongs to that responsibility.
+- Report out-of-responsibility content as an ownership problem before comparing it to code.
+- Do not check non-exhaustive examples as complete inventories.
 
-## 建立声明清单
+## Build a claim inventory
 
-- 仅为职责内内容建立可验证声明。
-- 区分规范性定义、生成内容、派生摘要和非穷举示例。
-- 按事实类型确定规范性来源并定位证据。
-- 检查定义是否冲突。检查派生内容是否忠于来源。
+- Form verifiable claims only for content within responsibility.
+- Distinguish normative definitions, generated content, derived summaries, and non-exhaustive examples.
+- Locate normative sources and evidence by fact type.
+- Check conflicting definitions and whether derived content faithfully reflects sources.
 
-按事实类型定位来源，不逐项遍历：
+Locate sources by fact type rather than enumerating everything:
 
-- 产品或业务行为：产品规范、业务规则。
-- API：OpenAPI、Schema 或协议；CLI：规范或参数定义；配置：Schema 或规范；数据结构：Schema、Migration 或协议。
-- 实现结构与执行行为：代码；部署：IaC 或部署配置；外部协议：官方标准或第三方规范。
-- 说明性内容：对应规范性来源。
+- Product or business behavior: product specifications and business rules.
+- APIs: OpenAPI, schemas, or protocols; CLI: specification or argument definitions; configuration: schema or specification; data structures: schema, migrations, or protocols.
+- Implementation and execution: code; deployment: IaC or deployment configuration; external protocols: official standards or third-party specifications.
+- Explanatory content: its corresponding normative sources.
 
-## 判定相关性
+## Determine relevance
 
-仅在根据代码变更反查文档时执行本节：
+Apply this section only when tracing documents from code changes:
 
-- 先判断代码变更是否改变目标文档负责的事实。
-- 仅实现对象新增、删除、重命名或移动时，不要推定文档受影响。
-- 按[项目知识库规范](project-knowledge-base.md)的内容边界判断变更对文档的影响；现有说明可能失效时，纳入校验。
-- 按“判定状态”记录相关性。继续查证候选相关声明，校验已确认受影响的声明。仅进行代码变更影响审查时，可跳过明确无关的声明；同时开展全面审查时，仍按指定范围检查这些声明。
-- 证据无法取得时，保留候选相关状态，标记待确认，说明缺失证据，并列入未验证范围。
+- First determine whether a code change alters facts owned by the document.
+- Adding, deleting, renaming, or moving implementation objects alone does not establish document impact.
+- Assess under the [content boundaries](project-knowledge-base.md#content-boundaries); include potentially obsolete explanations for verification.
+- Record relevance under Judgment statuses. Investigate potentially related claims and verify confirmed affected ones. In change-impact-only reviews, unrelated claims may be skipped; in comprehensive reviews, still check them within scope.
+- If evidence is unavailable, retain potentially related status, mark needs confirmation, identify missing evidence, and list the unverified scope.
 
-## 校验声明
+## Verify claims
 
-- 按声明内容核对定义、默认值、取值范围、作用对象、生效条件、行为及边界。跳过不适用项。
-- 按[项目知识库规范](project-knowledge-base.md)检查文档规范，按“判定状态”记录结果。
-- 检查视觉参考资料及其资源链接是否可访问，实际呈现是否与文档一致；核对[视觉参考资料](project-knowledge-base.md#视觉参考资料)要求。无法查看呈现结果时，将相关结论标为未验证，并说明未验证范围。
+- Check definitions, defaults, value ranges, objects, conditions, behavior, and boundaries as applicable to each claim.
+- Check conventions under [project knowledge-base conventions](project-knowledge-base.md) and record results under Judgment statuses.
+- Check accessibility of visual references and their assets, actual rendering consistency, and [visual reference rules](project-knowledge-base.md#visual-references). If rendering cannot be viewed, mark relevant conclusions unverified and explain the uncovered scope.
 
-## 处理越界内容
+## Handle out-of-boundary content
 
-按[项目知识库规范的内容边界](project-knowledge-base.md#内容边界)处理疑似重复定义或实现复述：
+For suspected duplicate definitions or implementation restatements, follow [content boundaries](project-knowledge-base.md#content-boundaries):
 
-1. 判断内容是否属于目标文档职责。
-2. 对职责外内容提出删除、迁移、改为引用或改为非穷举示例的建议。
-3. 仅对决定保留的内容校验事实。
-4. 分别报告内容归属问题、事实错误和实现偏差。不要互相替代。
+1. Determine whether content belongs to the document's responsibility.
+2. Recommend removal, relocation, source links, or conversion to non-exhaustive examples for content outside it.
+3. Verify facts only for content chosen for retention.
+4. Report ownership problems, factual errors, and implementation deviations separately; do not substitute one for another.
 
-- 不要因职责外内容与代码一致而保留。
-- 不要因职责外内容与代码不一致而补齐。
-- 按[项目知识库规范](project-knowledge-base.md#内容边界)使用重构检验：假设仅调整内部实现，且文档负责的事实不变。若正文只是逐项复述内部实现，报告实现细节复述问题；不要将路径、符号等定位信息更新判为实现细节复述。
-- 不要从当前实现推定设计约束，也不要要求实现迁就缺乏规范依据的描述。
-- 发现疑似重复定义时，定位相关定义及来源，区分独立定义与派生内容，核对一致性；按[内容边界](project-knowledge-base.md#内容边界)提出有证据支持的修订建议。
+- Do not retain out-of-responsibility content merely because it matches code.
+- Do not fill out such content merely because it differs from code.
+- Apply the refactoring test under [content boundaries](project-knowledge-base.md#content-boundaries): assume only internals change while document-owned facts remain stable. Report content that merely enumerates internals; updating paths or symbols is not implementation restatement.
+- Do not infer design constraints from current implementation or demand implementation conform to unsupported descriptions.
+- For suspected duplicate definitions, locate definitions and sources, distinguish independent definitions from derived content, and check consistency. Propose evidence-supported revisions under [content boundaries](project-knowledge-base.md#content-boundaries).
 
-## 分批与委派
+## Batching and delegation
 
-- 按主题关联、内容规模和证据依赖划分批次；为每批新建一个专属子智能体。禁止同一子智能体承接多个批次；本批补证与纠错仍交给原子智能体。
-- 限定主智能体只负责分批、调度、追踪和汇总；禁止承担文档审查或事实裁定。
-- 向子智能体传入适用规则、用户约定、目标路径和证据线索。按可用并发容量调度；容量不足时排队，禁止合并批次或改由主智能体审查。子智能体不可用时报告未完成范围。
-- 要求每批返回审查范围、主要声明及规范性来源、问题与证据、跨文档关联、待确认项和未验证范围；同时保留通过项，供交叉复核。
-- 需要恢复审查时，在临时工作目录保存检查点，即进度与证据索引。记录范围、问题、文件路径、行号、必要的声明摘要及跨文档关联；不要复制原始材料或写入项目知识库。
-- 恢复时，读取检查点；将文件变化交给对应批次的子智能体，重新检查受影响的结论。
+- Batch by topic, content volume, and evidence dependencies. Create one dedicated subagent per batch; never assign multiple batches to one subagent. Return evidence supplementation and corrections to the same agent.
+- The main agent is limited to batching, scheduling, tracking, and consolidation; it must not review documents or decide facts.
+- Supply applicable rules, user conventions, targets, and evidence leads. Schedule within concurrency limits, queuing instead of merging batches or using main-agent review. Report incomplete scope if subagents are unavailable.
+- Each batch returns scope, major claims and normative sources, issues and evidence, cross-document relationships, pending matters, and unverified scope. Retain passed items for cross-review.
+- For resumability, save checkpoints in a temporary work directory, recording progress and evidence indexes: scope, issues, paths, lines, necessary claim summaries, and relationships. Do not copy raw materials or write checkpoints into the knowledge base.
+- On resume, read checkpoints and return changed files to the corresponding batch agent to revisit affected conclusions.
 
-## 交叉复核
+## Cross-review
 
-- 初审完成后，汇集各批声明与关联；按主题建立跨批次复核批次，每批最多 3 篇目标文档，每批新建一个专属子智能体。主题涉及超过 3 篇文档时，按事实拆分关联批次，覆盖全部相关声明。
-- 要求复核子智能体检查多事实源、内容重复、术语、实施状态、职责与引用一致性；读取相关原文及规范性来源，禁止仅凭摘要定论。
-- 对跨文档涉及的同一事实，复核来源及内容归属建议是否符合[内容边界](project-knowledge-base.md#内容边界)，核对各批结论是否一致；证据不足或来源无法确定时标为“待确认”，禁止自行选定权威。
-- 将结论冲突交给复核子智能体裁定；将补证任务交回对应初审批次。按需抽查通过项；发现遗漏时补建复核批次，发现新证据时修正结论并说明依据。
+- After initial review, consolidate claims and relationships. Create topic-based cross-batch review batches with at most 3 target documents each and a new dedicated subagent per batch. Split topics spanning more than 3 documents by related facts to cover all claims.
+- Review multiple sources of truth, duplication, terminology, implementation status, responsibilities, and reference consistency. Read original content and normative sources; summaries alone cannot establish conclusions.
+- For shared facts, verify source and ownership recommendations under [content boundaries](project-knowledge-base.md#content-boundaries) and consistency across batches. Mark insufficient evidence or unresolved authority as needs confirmation; do not arbitrarily select an authority.
+- Assign conflicting conclusions to cross-review agents and evidence supplementation to original batches. Spot-check passed items as needed, add cross-review batches for omissions, and revise conclusions with reasons when new evidence emerges.
 
-## 输出结果
+## Output
 
-- 在当前对话输出最终审查结果。
-- 先概述审查范围与主要结论，再列问题与修订建议。
-- 问题按以下顺序分类输出。四个分类均须保留；没有问题时写“无”：
-  1. `需要用户处理的冲突`：因规范性来源不明确、证据互相冲突或规则取舍，需要用户补充信息或决定以文档还是代码为准。
-  2. `文档内容与组织问题`：文档自身的表达、内容或组织存在问题，不涉及文档与代码的事实差异。
-  3. `文档和代码不符，建议修订文档`：已有明确依据表明代码或专用契约正确，文档陈旧或描述错误。
-  4. `文档和代码不符，建议修改代码`：已有明确依据表明文档承载的需求、约束或设计意图有效，代码实现存在偏差。
-- 无法确定应修订文档还是修改代码时，保留待确认状态；需要用户决定时归入“需要用户处理的冲突”，不要自行选择。
-- 在“文档和代码不符，建议修改代码”中使用以下优先级分组：`p0` 为需立即处理的严重安全、数据损失或系统不可用风险；`p1` 为影响关键行为或契约的问题；`p2` 为其他已确认偏差。每项同时说明具体影响和处理顺序。
-- 固定使用以下输出骨架：
+- Present final results in the current chat.
+- Summarize scope and major conclusions, then issues and revision suggestions.
+- Retain all four categories in this order; write "None" for empty ones:
+  1. `Conflicts requiring user action`: unclear normative sources, conflicting evidence, or rule tradeoffs requiring information or a decision between documentation and code.
+  2. `Documentation content and organization issues`: expression, content, or organization problems without document/code factual differences.
+  3. `Document/code mismatch: revise documentation`: clear evidence supports code or dedicated contracts, with obsolete or incorrect documentation.
+  4. `Document/code mismatch: change code`: clear evidence supports documented requirements, constraints, or intent, with deviating implementation.
+- When the correct side to change is unresolved, retain needs-confirmation status. Use Conflicts requiring user action only if a user decision is necessary; do not choose independently.
+- In code-change recommendations, group as `p0` for severe security, data-loss, or unavailability risks requiring immediate action, `p1` for key behavior or contract impacts, and `p2` for other confirmed deviations. Explain impact and handling order for each.
+- Use this output skeleton:
 
 ```markdown
-## 需要用户处理的冲突
+## Conflicts requiring user action
 
-## 文档内容与组织问题
+## Documentation content and organization issues
 
-## 文档和代码不符，建议修订文档
+## Document/code mismatch: revise documentation
 
-## 文档和代码不符，建议修改代码
+## Document/code mismatch: change code
 ### p0
 ### p1
 ### p2
 ```
 
-- 将初审与复核批次、各批目标文档数及子智能体映射放在末尾的批次与证据索引；核对范围覆盖情况，报告未完成范围。
-- 列出验证结果、待确认项及未验证范围。待确认项只有需要用户补充信息或决定规则取舍时，才归入“需要用户处理的冲突”；其余说明缺失证据和后续核查方式。根据代码变更反查时，另列相关性状态。
+- End with a batch and evidence index listing initial and cross-review batches, document counts, and agent mappings. Check coverage and report incomplete scope.
+- List verification outcomes, pending matters, and unverified scope. Put pending matters in Conflicts requiring user action only when user information or rule decisions are needed; otherwise explain missing evidence and follow-up checks. For code-change tracing, also list relevance statuses.
 
-### 问题条目
+### Issue entries
 
-- 为每项问题单列小节。用直白短标题概括具体偏差；拆分无关问题，不压成长条目。
-- 用文字说明具体影响、优先级与处理顺序；不要仅用 `p0`、`p1`、`p2` 等级标签或批次编号代替说明。批次编号留在证据索引。
-- 按“问题”“建议”“位置与证据”分段；加粗段首标签，段间留空行。不要用表格呈现问题清单。
-- **问题：**简述文档声明、已核对事实及影响。保留验证状态；区分已确认偏差与待确认的规则取舍。
-- **建议：**写明具体修订动作。需要决定规范与实现的取舍时，标明“需要先确定规则”；不要把待确认方案写成可直接执行的结论。
-- **位置与证据：**将目标文档、规范性来源和详细证据链接集中放在条目末尾；使用可读链接名称，提供准确位置或行号。不要在问题与建议正文中堆叠路径、命令标识符或批次编号。
+- Give each issue its own section with a short, plain description of the deviation. Split unrelated issues rather than compressing them into long entries.
+- Explain impacts, priority, and order in prose; priority tags or batch identifiers alone are insufficient. Keep batch identifiers in the evidence index.
+- Use separate paragraphs labeled **Problem**, **Recommendation**, and **Location and evidence**, with blank lines. Do not use issue tables.
+- **Problem:** summarize the claim, verified facts, and impacts. Retain verification status and distinguish confirmed deviations from unresolved rule choices.
+- **Recommendation:** specify revision actions. Mark choices between specification and implementation as "Rules must be decided first" rather than presenting unsettled options as executable conclusions.
+- **Location and evidence:** collect target, normative source, and detailed evidence links at the end of each entry, using readable labels and accurate locations or lines. Avoid scattering paths, commands, or batch IDs through problem and recommendation prose.
 
-## 注意事项
+## Cautions
 
-- 不要按文件名判断权威性。
-- 不要把“存在对应实现”视为“文档正确”。
+- Do not infer authority from filenames.
+- A corresponding implementation does not establish documentation correctness.

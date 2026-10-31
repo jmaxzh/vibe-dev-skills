@@ -1,97 +1,97 @@
-# 部署与维护
+# Deployment and Maintenance
 
-本参考面向执行 CC Connect 集成的维护者。目标链路是“消息平台 → CC Connect → 本机编程工具”；桌面镜像是独立的可选功能。
+This reference is for CC Connect integration maintainers. The primary path is messaging platform → CC Connect → local coding tool; desktop mirroring is an independent optional feature.
 
-## 发现与配置
+## Discovery and configuration
 
-检查安装来源、实际可执行文件、版本、启动参数、工作目录、认证后端、CC Connect 配置位置、会话数据位置和既有后台进程。优先参考已安装版本对应的资料，不从另一个项目复制标识或凭证。
+Inspect installation source, executables, versions, arguments, working directories, authentication backend, configuration, session data, and existing background processes. Prefer installed-version documentation; do not copy another project's identifiers or credentials.
 
-配置前确定消息平台、编程工具、允许使用者、项目工作目录和权限模式。模型与推理强度仅在工具支持且用户需要时配置；对话显示模式与飞书群话题模式遵循下述固定配置。话题隔离用于让不同话题有独立上下文，其具体行为取决于平台及 CC Connect 版本；不要把话题 ID、平台用户 ID 与编程工具会话 ID 混用。
+Before configuration, establish the platform, coding tool, allowed users, project directory, and permission mode. Configure model and reasoning effort only when supported and needed. Follow fixed display and Feishu topic rules below. Topic isolation gives topics independent context, with behavior depending on platform and version; do not confuse topic IDs, platform user IDs, and coding-tool session IDs.
 
-按版本资料选择安装方法与可用集成，避免为复刻历史示例锁定版本。以下仅表示配置结构，不是可直接部署的完整配置；字段是否适用仍需核对所选适配器：
+Choose installation and integrations using version-specific sources, not a historical example's version. This shows structure only, not deployable configuration; verify fields for the selected adapter:
 
 ```toml
 [[projects]]
 name = "example-project"
 
 [projects.agent]
-type = "<实际支持的编程工具类型>"
+type = "<actually supported coding-tool type>"
 
 [projects.agent.options]
-work_dir = "<实际项目绝对目录>"
+work_dir = "<actual absolute project directory>"
 
 [[projects.platforms]]
-type = "<实际支持的消息平台类型>"
+type = "<actually supported messaging-platform type>"
 
 [projects.platforms.options]
-# 按该平台填写应用身份、允许使用者及事件配置。
+# Supply platform app identity, allowed users, and event configuration.
 ```
 
-CC Connect 的当前配置示例和使用指南可作为入口；部署时应查阅与实际版本相符的内容，而不是假设主分支始终适用：[配置示例](https://github.com/chenhg5/cc-connect/blob/main/config.example.toml)、[使用指南](https://github.com/chenhg5/cc-connect/blob/main/docs/usage.md)。
+Start with CC Connect's [configuration example](https://github.com/chenhg5/cc-connect/blob/main/config.example.toml) and [usage guide](https://github.com/chenhg5/cc-connect/blob/main/docs/usage.md). Consult versions matching the deployment rather than assuming main is always applicable.
 
-## 固定配置
+## Fixed configuration
 
-- 对话显示模式固定为 `quiet`，配置全局 `[display]` 的 `mode = "quiet"`。检查项目级显示配置，避免覆盖为其他模式。
-- 飞书群必须使用话题模式，并在对应飞书适配器的 `[projects.platforms.options]` 中设置 `thread_isolation = true`，按话题隔离源会话。群设置与适配器配置分别核查，不能仅凭开启话题隔离就认定群已采用话题模式。
+- Set global `[display]` to `mode = "quiet"`. Check project-level settings do not override it with another mode.
+- Feishu groups must use topic mode, with `thread_isolation = true` in the Feishu adapter's `[projects.platforms.options]`. Check group mode and adapter configuration separately; enabling isolation alone does not establish topic mode.
 
-以下片段应合并到实际配置的对应位置，不要重复创建已有表：
+Merge these fragments into the relevant tables; do not recreate existing tables:
 
 ```toml
 [display]
 mode = "quiet"
 
-# 在对应的飞书 [projects.platforms.options] 表内设置：
+# Inside the relevant Feishu [projects.platforms.options] table:
 # thread_isolation = true
 ```
 
-字段依据见上述官方配置示例；部署时仍需核对已安装版本的支持情况。不支持时报告阻碍并处理版本兼容问题，不静默改用其他模式。
+The official example above is the field reference; still verify installed-version support. If unsupported, report the blocker and address compatibility rather than silently switching modes.
 
-验收时，在飞书群中确认消息按话题组织，同一话题可续聊、不同话题的源会话相互隔离；确认对话以 `quiet` 模式显示，不发送思考过程和工具进度消息。其他消息平台仅执行 `quiet` 显示要求，话题隔离按其需求配置。
+For acceptance, verify Feishu messages are organized by topic, conversations continue within a topic, and different topics have isolated source sessions. Verify `quiet` display without reasoning or tool-progress messages. Other messaging platforms require `quiet`; configure topic isolation according to their requirements.
 
-## 认证与会话存储
+## Authentication and session storage
 
-消息平台应用密钥用于机器人接入，编程工具认证用于模型调用，可选消息平台 CLI 登录用于额外资源操作，三者不能互相替代。仅因收到某平台消息，不需要额外安装或调用该平台 CLI。
+Platform app secrets connect the bot; coding-tool authentication enables model calls; optional platform CLI login enables additional resource operations. They are not interchangeable. Receiving a platform message alone does not require installing or using its CLI.
 
-如果执行端和桌面端可能同时打开同一源会话，应先确认目标工具的并发写入约束。采用桌面镜像方案时，执行端保存源会话，桌面端保存副本；副本仅供查看，不用于继续执行任务。
+If execution and desktop could open the same source session concurrently, inspect the tool's concurrent-write constraints first. With mirroring, execution stores source sessions and desktop stores view-only copies, which must not be used to continue task execution.
 
-Codex 使用文件认证后端时，可考虑通过符号链接共享凭证文件。执行前必须确认目标凭证文件存在，且该版本的读写及刷新行为适用于此方案。若使用钥匙串、API 密钥或其他认证后端，应选择该后端支持的方式。
+For Codex file authentication, credential-file symlinks may be suitable. First verify the target exists and the version's read/write/refresh behavior supports this approach. For keychain, API-key, or other backends, use a supported mechanism.
 
-- 仅链接需要共享的凭证文件，不链接整个会话数据目录。
-- 目标已存在时检查其用途，不强制覆盖。已有会话迁移单独制定方案。
-- 在指定认证来源重新登录；独立执行目录内的退出操作可能删除链接，维护后应复查。
-- 登录状态检查不证明服务端凭证有效；可在已授权范围内用无副作用的最小请求验证。并发请求成功不证明并发刷新令牌安全。
+- Link only credentials requiring sharing, not the entire session-data directory.
+- Inspect existing targets; do not force overwrite. Plan existing-session migration separately.
+- Log in again at the designated source. Logout within an isolated execution directory may delete the link; recheck after maintenance.
+- Login-status checks do not prove server-side validity. Within authorization, a minimal non-mutating request may verify it. Concurrent successful requests do not prove concurrent token refresh is safe.
 
-保护包含应用密钥的配置及含聊天正文的日志、缓存和数据库，避免将其纳入技能、版本库或诊断附件。
+Protect secret-bearing configuration and chat-bearing logs, caches, and databases; do not include them in skills, repositories, or diagnostic attachments.
 
-## 首次接入
+## Initial integration
 
-1. 在选定平台配置应用或机器人，按对应版本指南设置消息权限、事件订阅、接收方式及允许使用者，并完成平台要求的发布或授权。
-2. 在目标项目目录单独验证编程工具能使用预期认证运行，确认权限模式符合用户需求。
-3. 写入实际 CC Connect 配置。
-4. 在前台启动一个实例，检查其运行环境与日志。
-5. 在用户指定的测试会话验证实际收发、工作目录、模型及话题行为；出现认证或平台权限错误时，先修复主链路。
-6. 停止前台实例。
-7. 采用操作系统适用的服务管理方式部署。CC Connect 自身后台管理能力与外部服务管理器选择其一，避免重复启动。
+1. Configure the platform app or bot with version-specific permissions, event subscriptions, receiving method, and allowed users, completing required publication or authorization.
+2. Independently verify the coding tool in the target directory with expected authentication and permission mode.
+3. Write actual CC Connect configuration.
+4. Start one foreground instance and inspect its environment and logs.
+5. In the user-designated test conversation, verify real messaging, directory, model, and topic behavior. Repair authentication or platform-permission failures on the primary path first.
+6. Stop the foreground instance.
+7. Deploy with an appropriate OS service manager. Choose either CC Connect background management or an external manager to avoid duplicates.
 
-macOS 可用用户级 launchd，其他系统选择其适用机制；不要照搬 plist 或固定三服务布局。后台 PATH、环境变量和可执行路径需要显式配置，包装器还需要其依赖运行时。
+User-level launchd is an option on macOS; choose appropriate mechanisms elsewhere rather than copying plist files or a fixed three-service layout. Explicitly configure background PATH, variables, and executables, including wrapper runtimes.
 
-## 维护、迁移与恢复
+## Maintenance, migration, and recovery
 
-修改前确认实例归属、正在使用的配置及数据位置，备份需要改动的配置和持久状态。更新生成文件后对比启动参数及差异，先停止受影响实例，再安装并恢复服务；不覆盖已有源会话或将桌面数据库复制为另一台机器的初始化数据。
+Before changes, identify instance ownership and active configuration/data, and back up affected configuration and persistent state. Compare generated arguments and diffs, stop affected instances, install changes, and restore services. Do not overwrite source sessions or initialize another machine by copying desktop databases.
 
-仅修改同步代码时优先重启同步服务。Codex 随包实现的 broker 维护顺序、配置生成及启动方式见[Codex 镜像实现](codex-mirror-example.md)。升级桌面应用、CLI 或 CC Connect 后，重新执行兼容性检查和关键验收；若失败则停用镜像、保留日志及映射，并恢复兼容的部署或先完成适配。
+For sync-only changes, prefer restarting only sync. For the bundled Codex implementation's broker order, generation, and startup, see [Codex mirror implementation](codex-mirror-example.md). After desktop, CLI, or CC Connect upgrades, repeat compatibility checks and key acceptance. On failure, disable mirroring while retaining logs/mappings, then restore a compatible deployment or adapt first.
 
-停用镜像不要求停用 CC Connect。卸载自启动时保留源会话和镜像日志，是否删除聊天数据由用户另行决定。
+Disabling mirroring does not require disabling CC Connect. Preserve source sessions and mirror logs when removing startup services; deletion of chat data requires a separate user decision.
 
-## 排障顺序
+## Troubleshooting order
 
-| 现象 | 检查与判断 | 恢复及验证 |
+| Symptom | Checks and judgment | Recovery and verification |
 | --- | --- | --- |
-| 收不到平台消息 | 查事件订阅、发布状态、机器人可见范围、消息权限与允许使用者 | 按平台错误修复后，在指定会话验证收发 |
-| 平台已收到消息但工具失败 | 查真实可执行文件、工作目录、权限模式及独立执行环境认证 | 修复对应配置后先验证工具，再验证消息回复 |
-| 认证撤销或刷新失败 | 查认证来源及链接是否仍有效，避免多份旧凭证反复覆盖 | 在指定来源重新登录，必要时重启执行实例并做实际请求验证 |
-| 会话写锁冲突 | 查执行端是否误用桌面会话存储、是否有重复实例 | 恢复会话隔离后测试续聊；不删除锁文件或终止无关进程 |
-| 前台正常、后台找不到命令 | 查服务中的可执行路径、PATH、包装器依赖及环境变量 | 修正服务配置并只重启对应实例 |
-| 主链路正常但副本异常 | 查源会话文件、项目 ID、兼容性检查、同步日志及订阅状态 | 按 Codex 专属参考处理；其他工具按其实现诊断 |
+| No platform messages | Event subscriptions, publication, bot visibility, permissions, allowed users | Fix platform errors and test messaging in the designated conversation |
+| Platform receives but tool fails | Executable, directory, permissions, execution-environment authentication | Fix tool configuration, verify tool, then messaging |
+| Revoked auth or refresh failure | Credential source and symlink; avoid repeated stale overwrites | Log in at designated source, restart if needed, verify an actual request |
+| Session write-lock conflict | Execution using desktop storage or duplicate instances | Restore isolation and test continuation; do not delete locks or kill unrelated processes |
+| Foreground works, background command missing | Executable path, PATH, wrapper dependencies, variables | Correct service and restart only its instance |
+| Messaging works, copies fail | Source file, project ID, compatibility, logs, subscriptions | Use Codex-specific reference or the other tool's own implementation |
 
-交付或求助材料保留版本、脱敏错误和状态摘要，不附真实凭证、完整聊天日志或数据库。
+For delivery or support, retain versions, redacted errors, and status summaries; exclude credentials, full chat logs, and databases.

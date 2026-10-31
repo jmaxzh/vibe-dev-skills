@@ -1,12 +1,12 @@
-# 移动端界面与交互设计原则
+# Mobile UI and Interaction Design Principles
 
-## 使用方式
+## Usage
 
-- 读取[公共原则](../SKILL.md#公共原则)，按目标设备、操作系统和握持方式选取以下原则。
-- 设计对象为移动网页时，同时读取[网页原则](web-ui-interaction.md)。
+- Read the [shared principles](../SKILL.md#shared-principles) and select the following rules for the target device, OS, and grip.
+- For mobile web, also read [web principles](web-ui-interaction.md).
 
-## 平台原则
+## Platform principles
 
-- **触控与触达**：结合设备尺寸和握持方式安排高频操作，使其便于触达；将后果严重且易误触的操作与高频操作适当分隔。
-- **可用区域适配**：避让系统栏、屏幕开孔和系统手势区域；软键盘弹出后，保持当前字段、错误提示和必要操作可见或可滚动到达。
-- **导航与返回**：遵循目标系统的返回惯例，区分返回上级、关闭临时界面和切换主要功能区域；返回时按任务需要保留筛选条件、滚动位置等浏览状态。
+- **Touch and reachability**: position frequent actions for device size and grip. Separate high-consequence, easily mis-tapped actions from frequent actions appropriately.
+- **Usable area**: avoid system bars, cutouts, and system gesture regions. When the keyboard opens, keep the active field, errors, and necessary controls visible or reachable by scrolling.
+- **Navigation and back behavior**: follow target-system conventions; distinguish going up a level, closing temporary UI, and switching primary areas. Preserve filters, scroll position, and other browsing state as needed when returning.

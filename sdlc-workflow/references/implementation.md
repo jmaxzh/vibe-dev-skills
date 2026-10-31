@@ -1,74 +1,74 @@
-# 实施要求
+# Implementation Requirements
 
-## 对齐
+## Alignment
 
-- 按[主流程调度规则](../SKILL.md#工作流程与能力)衔接前置阶段，依据适用于本次任务的需求、技术方案和验收方案实施。
-- 按本次完成条件执行。发现新增场景时，先判断目标相关性、回归影响和安全风险；不得自动升级为完成门槛。需要改变既定范围或用户预期时，说明影响并请求必要决定。
+- Connect prerequisite stages under the [main workflow rules](../SKILL.md#workflow-and-capabilities). Implement applicable requirements, technical design, and acceptance plans.
+- Follow this task's completion criteria. For newly discovered scenarios, assess relevance, regression impact, and safety risk first; do not automatically make them completion gates. Explain impacts and obtain necessary decisions if scope or user expectations must change.
 
-## 核对现状
+## Inspect the current state
 
-- 检查本次变更涉及的现有测试；仅在缺少保护相关既有行为的必要证据时，补充测试。
-- 按“证据复用”核对已有基线证据，补跑缺失或失效的必要基线测试；区分目标缺陷、其他既有失败和环境故障，记录结果。
-- 仅在失败导致无法安全实施或无法判断新增回归时，停止受影响工作并说明原因；继续不受影响的工作。
+- Inspect existing tests affected by the change. Add tests only when necessary evidence protecting related existing behavior is missing.
+- Reuse baseline evidence under Evidence reuse, running only missing or invalid necessary baseline tests. Distinguish target defects, other existing failures, and environment failures; record results.
+- Stop affected work only when failure prevents safe implementation or assessment of new regressions. Explain why and continue unaffected work.
 
-## 实现与测试
+## Implementation and tests
 
-- 围绕最终系统应具备的行为与约束开展测试，包括必要的回归测试；不保留仅用于证明开发历史操作或服务于废弃实现的测试。迁移、安装、升级等操作属于系统应支持的行为时，按需验证。
-- 尽早验证高返工风险。界面任务先校准代表性页面的构图、共享样式和关键交互，再展开大量状态验收。
-- 按变更性质、风险和项目约定选择测试方式；用户或项目要求测试驱动开发（TDD）时，遵循先测试、后实现。
-- 修复缺陷时，优先补充能复现目标缺陷的回归测试；能够执行时，先确认失败源于目标缺陷。采用 TDD 时，确认红灯源于目标行为尚未实现；不符合预期时，先查明原因。
-- 完成满足需求的实现，运行与变更影响范围相称的测试及项目规定的检查；仅在项目要求、影响范围广或无法可靠界定、或已有结果提示更广影响时，运行完整测试集。
-- 按变更影响确定复验范围；按“证据复用”复用有效证据，记录失效证据及补跑理由。保留适用的项目检查；发现规则冲突时，说明来源与影响，不静默绕过。
+- Test behavior and constraints the final system must support, including necessary regressions. Do not retain tests solely proving historical development operations or serving abandoned implementations. Test migration, installation, and upgrades as needed when they are supported system behavior.
+- Validate high-rework risks early. For UI work, calibrate representative-page composition, shared styles, and key interactions before extensive state acceptance testing.
+- Choose verification according to change nature, risk, and project conventions. Follow test-first implementation when the user or project requires test-driven development (TDD).
+- For fixes, prioritize regression tests reproducing the target defect; when executable, first confirm the failure is caused by that defect. With TDD, confirm the red result reflects missing target behavior; investigate unexpected failures first.
+- Implement requirements and run proportionate tests and required project checks. Run the full suite only when required, impacts are broad or cannot reliably be bounded, or evidence indicates wider effects.
+- Set reverification scope by change impact. Reuse valid evidence under Evidence reuse, recording invalidated evidence and rerun reasons. Keep applicable project checks; explain rule conflicts and impacts instead of silently bypassing them.
 
-## 证据复用
+## Evidence reuse
 
-- 核验相关代码、测试、配置、依赖和运行条件未发生影响结果的变化，优先复用仍有效的测试与验收证据。工作树路径、检出实例、阶段或候选标识变化本身不使证据失效；禁止仅因此全量重跑。
-- 允许一组证据证明多个验收项；保留各项与证据的对应关系。
-- 仅在证据缺失、失效、覆盖不足、结果矛盾或用户明确要求时补跑；优先补跑受影响项。无法可靠界定影响范围、发现更广回归线索或项目、用户要求更广检查时，扩大验证范围。记录复用证据、补跑项目和理由。
+- Confirm no relevant changes to code, tests, configuration, dependencies, or operating conditions affect results; reuse valid testing and acceptance evidence first. A changed worktree path, checkout, stage, or candidate identifier alone does not invalidate evidence or justify a full rerun.
+- One body of evidence may support multiple acceptance items; retain mappings between items and evidence.
+- Rerun only for missing, invalid, insufficient, or contradictory evidence, or explicit user requests, prioritizing affected items. Expand when impacts cannot reliably be bounded, broader regressions emerge, or the user or project requires wider checks. Record reused evidence, reruns, and reasons.
 
-## 验收
+## Acceptance
 
-- 按批执行本次约定范围内的验收；逐项记录结果和证据。不要仅因验收项分别列出，就为每项重复执行相同准备和测试，或将单项完成视为整个任务结束；禁止以抽查代替约定验证。
-- 集中汇总问题、统一修复；按“证据复用”确定复验范围。仅在失败阻碍后续执行或证据可信度时，提前处理该失败；继续执行不受影响的验收项。
-- 仅在获得新事实、采用有依据的新方法、环境发生变化，或已知故障具有暂时性且重试有合理成功预期时重试；否则停止重复尝试。记录阻碍、影响及未验证范围，继续独立工作；不得以停止重试代替验收通过。
-- 分别报告实现状态和验收状态。验收失败或无法执行时，如实标记并说明原因；不得宣称验收通过。
-- 本次必需项未通过时，明确报告未完成，汇总阻碍及影响；需要调整范围时请求必要取舍。完成代码审查及其问题修复、复验，并达到本次其他完成条件后立即交付；禁止无依据扩充验收。
+- Execute agreed acceptance scope in batches and record each item's result and evidence. Separate acceptance items do not justify repeating identical setup and tests. Completing one item does not finish the task; sampling must not replace agreed verification.
+- Consolidate issues and fixes, then determine reverification under Evidence reuse. Handle a failure immediately only when it blocks subsequent work or evidence credibility; continue unaffected checks.
+- Retry only with new facts, an evidence-based new method, changed environment, or a known transient fault with reasonable prospects of success. Otherwise stop repeating attempts. Record blockers, impacts, and unverified scope while continuing independent work. Stopping retries is not passing acceptance.
+- Report implementation and acceptance status separately. Mark failed or unavailable acceptance honestly with reasons; do not claim success.
+- If required items have not passed, explicitly report incomplete work with blockers and impacts; request necessary scope tradeoffs. Deliver promptly once code review, fixes, reverification, and other completion criteria are met; do not expand acceptance without grounds.
 
-## 代码审查
+## Code review
 
-### 准备与分工
+### Preparation and assignments
 
-- 本节适用于代码、配置、构建脚本等影响系统行为的实现变更；纯文档变更按[指令与文档设计原则](../../sdlc-instr-doc-design/SKILL.md)审查，混合变更分别应用对应规则。
-- 实现与测试完成后、最终交付前，由主代理组织多个子代理审查本次实现变更；不因变更简单或 PR 状态而跳过。主代理明确变更范围、比较基线、适用项目规则和变更摘要，提供给各审查子代理。有 PR 时结合 PR 信息；无 PR 时审查本地差异，包括本次新增的未跟踪文件。
-- 使用五个子代理按以下方向独立审查，不固定模型；并发额度不足时分批执行。子代理能力不可用时，明确报告审查受阻，不以主代理自查替代多子代理审查或宣称审查完成。
-  1. 项目规则：核查变更是否符合实际适用于本次变更的项目规则。
-  2. 明显缺陷：以变更内容为主，浅查明显且影响功能的缺陷，避免无关上下文和细枝末节。
-  3. Git 历史：结合修改代码的 blame 和提交历史，识别本次变更引入的问题。
-  4. 历史 PR：查阅涉及相关文件的历史 PR 评论，核查其中仍适用的问题是否出现在本次变更中。
-  5. 代码注释：核查变更是否违反修改文件中仍适用的注释约束。
-- 历史资料不可用时，记录原因和未覆盖范围，继续其余审查；不得将缺少资料表述为已验证无问题。审查本身不重复运行构建、类型检查等既有检查，修复后的必要验证仍按“实现与测试”和“证据复用”执行。
+- This section applies to implementation changes affecting behavior, such as code, configuration, and build scripts. Review documentation-only changes under [Instruction and Documentation Design Principles](../../sdlc-instr-doc-design/SKILL.md); apply each rule to the corresponding part of mixed changes.
+- After implementation and tests and before delivery, the main agent organizes multiple subagents to review changes; do not skip for simple changes or PR status. Give reviewers the scope, baseline, applicable rules, and summary. Use PR context when present; otherwise review local diffs, including new untracked files.
+- Use five independent reviewers for the following directions, without fixing their models. Run in batches if concurrency is limited. If subagents are unavailable, explicitly report blocked review; do not substitute main-agent self-review or claim completion.
+  1. Project rules: check compliance with rules actually applicable to the change.
+  2. Obvious defects: inspect changes for clear functional defects without unrelated context or minor details.
+  3. Git history: use blame and history to identify newly introduced issues.
+  4. Historical PRs: inspect still-applicable comments on related files for recurrence.
+  5. Code comments: check whether changes violate applicable comments in modified files.
+- If history is unavailable, record why and the uncovered scope while continuing other review. Missing material is not evidence of no issues. Do not repeat existing build, type, or similar checks solely for review; verify fixes under Implementation and tests and Evidence reuse.
 
-### 问题复核
+### Issue verification
 
-- 子代理为每个候选问题提供具体位置、触发条件、实际影响、证据及提出理由；规则类问题必须引用实际适用的具体条款。问题必须源于本次变更；不得仅因未修改代码中存在问题而将其列为本次缺陷。
-- 排除既有问题、风格挑剔、无证据猜测和预期行为。不重复报告编译器、类型检查器或 lint 等已有有效检查结果明确覆盖且已记录的问题，但仍须按实施要求处理；检查缺失、未覆盖或执行失败时，不据此排除候选问题。不将泛泛的质量建议列为缺陷；规则已明确允许例外且变更满足例外条件时，不按违规报告。
-- 主代理汇总并去重候选问题，为每个问题安排独立于提出者的子代理复核，提供变更、问题描述及适用项目规则。复核子代理核实问题是否真实、是否由本次变更引入，以及规则类问题是否确有对应条款，并按以下标准给出 0–100 分置信度及证据；仅保留达到 80 分的问题。
-- 置信度仅衡量证据对问题真实性及其由本次变更引入的支持程度；影响程度和发生频率单独描述，不用于提高或降低置信度。
+- For each candidate, reviewers provide location, trigger, impact, evidence, and reasoning. Rule-based issues must cite the specific applicable rule. Issues must result from this change; do not report untouched pre-existing defects as new ones.
+- Exclude existing issues, style nitpicks, unsupported speculation, and expected behavior. Do not repeat problems explicitly covered by recorded valid compiler, type, lint, or other checks, while still addressing them under implementation requirements. Missing, incomplete, or failed checks do not justify exclusion. Generic quality suggestions are not defects; allowed, applicable exceptions are not violations.
+- The main agent consolidates and deduplicates candidates and assigns each to a reviewer independent of its reporter, supplying the change, claim, and rules. The reviewer checks reality, causation, and specific rule applicability, scoring confidence from 0–100 with evidence using the following criteria. Retain only issues scoring at least 80.
+- Confidence measures evidence that an issue is real and introduced by this change. Describe severity and frequency separately; do not use them to alter confidence.
 
-| 分值 | 复核标准 |
+| Score | Verification standard |
 | --- | --- |
-| 0 | 完全不可信：简单核查即可排除，属于误报或既有问题。 |
-| 25 | 可信度较低：存在初步线索，但关键判断缺少证据，尚无法验证。 |
-| 50 | 中等可信：部分判断已有证据支持，但触发条件、缺陷结果或与本次变更的因果关系仍有关键环节未核实。 |
-| 75 | 高度可信：主要证据支持问题真实存在且由本次变更引入，但仍有可能改变结论的疑点尚未排除。 |
-| 100 | 完全确定：直接证据或可复现结果确认问题真实存在且由本次变更引入，关键疑点已排除；规则类问题已确认具体条款适用且确被违反。 |
+| 0 | Not credible: a simple check excludes it as a false positive or pre-existing issue. |
+| 25 | Low confidence: initial clues exist but key judgments lack verifiable evidence. |
+| 50 | Moderate confidence: partial evidence, with critical trigger, outcome, or causal links unverified. |
+| 75 | High confidence: main evidence supports a real introduced issue, but unresolved doubts could change the conclusion. |
+| 100 | Certain: direct evidence or reproduction confirms a real introduced issue and excludes key doubts; rule-based issues have a confirmed applicable, violated provision. |
 
-### 修复与交付
+### Fixes and delivery
 
-- 主代理必须修复经独立复核且置信度达到 80 分的问题，按“证据复用”确定必要测试与复验范围，并安排子代理复核修复是否有效及是否引入相关问题。修复中发现的新候选问题仍按上述标准复核，不无依据重启全量审查。
-- 问题超出授权范围或涉及重大取舍时，明确报告影响并请求必要决定，不静默跳过。达标问题尚未修复或必要复验未完成时，明确报告未完成，不宣称达到交付条件。
-- 在当前任务中报告审查结论、修复状态和未验证范围，不自动发布 PR 评论。未发现达标问题时，报告“未发现达到报告阈值的问题”，不声称代码不存在问题。引用问题时提供可定位的文件与行号；使用远程代码链接时采用实际仓库的完整提交 SHA 和对应行号。
+- Fix independently verified issues scoring at least 80, determine necessary tests and reverification under Evidence reuse, and arrange subagent review of fix effectiveness and related regressions. Verify new candidates under the same criteria; do not restart a full review without grounds.
+- For issues outside authorization or involving major tradeoffs, explain impacts and request necessary decisions instead of silently skipping them. If qualifying issues or necessary reverification remain, report incomplete work, not completion.
+- Report conclusions, fix status, and unverified scope in this chat; do not automatically post PR comments. If none qualify, say "No issues met the reporting threshold," not that code has no issues. Provide precise files and lines; remote code links must use the actual repository, full commit SHA, and corresponding lines.
 
-## 知识库更新
+## Knowledge-base updates
 
-- 实施完成后，按[项目知识库规范](project-knowledge-base.md)更新受影响文档；仅内部实现变化且文档负责的事实未变时，不机械改写正文。更新失效的路径、符号等定位信息。
+- After implementation, update affected documentation under [project knowledge-base conventions](project-knowledge-base.md). Do not mechanically rewrite documents when only internal implementation changes and their facts remain valid. Update obsolete paths, symbols, and other locators.
