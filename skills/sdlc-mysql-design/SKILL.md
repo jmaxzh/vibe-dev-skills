@@ -8,7 +8,7 @@ license: MIT
 
 ## Applicability
 
-- Apply automatically when the task or project establishes MySQL as the target database and involves designing, writing, modifying, reviewing, or optimizing data models, tables, SQL, indexes, transactions, or concurrency control. Explicit invocation is unnecessary.
+- Apply when the task or project establishes MySQL as the target database and involves data modeling, table design, SQL, indexes, transactions, or concurrency control; explicit invocation is unnecessary.
 - Use independently of the SDLC workflow. Do not select MySQL for generic database work or apply to tasks concerning only other databases.
 
 ## Usage
@@ -17,7 +17,7 @@ license: MIT
 - Establish the business meaning, integrity requirements, main access patterns, data scale and growth, concurrency, and consistency requirements relevant to the task. Use existing designs and workload evidence where available; state assumptions and their impact when key information is missing.
 - Apply transaction and concurrency rules to local InnoDB transactions. Explicitly identify the bans on queries within transactions, `CHECK` constraints, foreign-key constraints, and stored procedures as project conventions rather than MySQL limitations.
 - Assume a record is modified at most once per millisecond. This assumption does not guarantee that `updated_at` is a non-reused version identifier; apply the conditions under [timestamp checks](references/mysql-design-examples.md#timestamp-checks) before using it for concurrency control.
-- Follow applicable rules within task scope. If meaning or application is unclear, read the corresponding topic in [MySQL design examples](references/mysql-design-examples.md), not all examples by default.
+- Apply only the rules relevant to the task. Read the corresponding topic in [MySQL design examples](references/mysql-design-examples.md) when a rule needs clarification; do not load all examples by default.
 
 ## Data modeling
 
@@ -43,7 +43,7 @@ license: MIT
 
 ### Data types
 
-- Keep related columns' types and signedness compatible and as consistent as possible.
+- Keep columns used to reference or compare the same values compatible in data type and signedness; use consistent definitions where possible.
 
 - Represent exact monetary amounts with `DECIMAL` of explicit precision and scale, or integers in a defined smallest unit; define the currency and rounding rules. Preserve exact representation through storage, parameters, and calculations; do not calculate in floating point before conversion.
 
@@ -51,7 +51,7 @@ license: MIT
 
 - Use `is_xxx` and `TINYINT UNSIGNED` for booleans, with application validation restricting values to 0 or 1.
 
-- Verify trailing-space semantics for `CHAR`.
+- When using `CHAR`, verify that its trailing-space handling matches the field's business meaning.
 
 - `TIMESTAMP` converts between session time zone and UTC; `DATETIME` does not. Store original zone names or offsets separately when needed.
 
@@ -79,7 +79,7 @@ license: MIT
 
 - Use `utf8mb4` for text.
 
-- Keep related columns' character sets and collations compatible and as consistent as possible.
+- Keep text columns used to reference or compare the same values compatible in character set and collation; use consistent definitions where possible.
 
 - Before collation changes, check equality changes and newly duplicate values violating uniqueness.
 
@@ -101,7 +101,7 @@ license: MIT
 
 - Prevent `UPDATE`/`DELETE` from degenerating into full-table operations due to empty parameters or missing dynamic predicates. `LIMIT` does not replace business scope conditions.
 
-- `updated_at` automatically tracks content changes, not execution time of every update statement.
+- Under the audit-timestamp definition above, `updated_at` changes automatically when row content changes; it does not record every update statement's execution time.
 
 - Do not replace ordinary updates with `REPLACE INTO`: on primary/unique conflict its replacement semantics can reset unspecified fields to defaults and trigger delete/insert behavior.
 
@@ -125,7 +125,7 @@ license: MIT
 
 - **Statements inside transactions**: perform queries, business validation, and write preparation outside explicit transactions. Inside the transaction, allow only necessary data modifications and transaction control. Forbid ordinary queries, locking queries, and query components within writes, including subqueries. See [examples](references/mysql-design-examples.md#statements-inside-transactions).
 
-- **Transaction connection**: writes that must succeed together must not escape the transaction through connection switching, asynchronous execution, or propagation settings. See [examples](references/mysql-design-examples.md#transaction-connection).
+- **Transaction connection**: execute writes that must succeed together on the same connection within the same transaction. Connection switching, asynchronous execution, and propagation settings must preserve that boundary. See [examples](references/mysql-design-examples.md#transaction-connection).
 
 - **Implicit commits**: do not simulate nested transactions with `START TRANSACTION` or switch `autocommit` from 0 to 1 between business writes; both implicitly commit. Keep DDL such as `ALTER TABLE` and `TRUNCATE TABLE` out of business write transactions. See [examples](references/mysql-design-examples.md#implicit-commits).
 
@@ -141,7 +141,7 @@ license: MIT
 
 - **Referential integrity**: use conditional updates, uniqueness, and necessary transactions to coordinate reference creation/change against target deletion/invalidation. See [examples](references/mysql-design-examples.md#concurrent-customer-reference-maintenance).
 
-- **Update results**: interpret conditional-update results using the driver's matched-row or changed-row semantics. An unmet predicate is not success. See [examples](references/mysql-design-examples.md#update-results).
+- **Update results**: determine whether the driver reports matched or changed rows, then assess whether the required write succeeded. An unmet predicate is not success; zero changed rows alone does not prove an unmet predicate. See [examples](references/mysql-design-examples.md#update-results).
 
 - **Write order**: competing transactions should use consistent table/record order. SQL text order does not establish actual lock order. See [examples](references/mysql-design-examples.md#write-order).
 
@@ -177,9 +177,9 @@ license: MIT
 
 - **Database-side computation**: prefer SQL-expressible computations with acceptable overall performance in the database. Combine update calculations and necessary business predicates in one write. See [examples](references/mysql-design-examples.md#database-side-computation).
 
-- **Multiple detail joins**: prevent independent one-to-many joins from multiplying rows and double-counting. Aggregate each independent detail at its own grain first; do not patch with `SUM(DISTINCT ...)`. See [examples](references/mysql-design-examples.md#multiple-detail-joins).
+- **Multiple detail joins**: prevent independent one-to-many joins from multiplying rows and double-counting. For independent totals, aggregate each detail set at the required result grain before joining; do not use `SUM(DISTINCT ...)` to compensate for row multiplication. See [examples](references/mysql-design-examples.md#multiple-detail-joins).
 
-- **Pagination with joins**: page primary records by the complete filtering criteria before retrieving details. If filtering/ordering depends on details, do not paginate first and apply criteria afterward. See [examples](references/mysql-design-examples.md#pagination-with-joins).
+- **Pagination with joins**: when the page unit is a primary record, select the page using the complete filtering and ordering criteria before retrieving its details. If filtering/ordering depends on details, do not paginate first and apply criteria afterward. See [examples](references/mysql-design-examples.md#pagination-with-joins).
 
 - **Repeated large-field transfer**: evaluate separate batch reads for primary records and details when joins repeatedly transmit large primary fields. Handle version consistency and avoid per-row queries. See [examples](references/mysql-design-examples.md#repeated-large-field-transfer).
 
@@ -210,4 +210,8 @@ license: MIT
 
 - Measure actual requests and complete business-path latency, including transfer, reading, and application computation, not just first-row or individual-query time. Add load validation only for key concurrent paths. See [verification example](references/mysql-design-examples.md#verification-using-actual-data).
 
-- Report conditions, results, and unverified scope. Index use, static plans, or small tests are not evidence of passing actual-load verification.
+- Report verification conditions, results, and unverified scope. Index use, static plans, or small tests are not evidence of passing actual-load verification.
+
+## Deliverables
+
+- Provide the design, SQL, changes, or review findings requested by the task, with the relevant business assumptions and reasons for consequential choices. Identify unresolved correctness or performance questions and distinguish static analysis from executed checks.

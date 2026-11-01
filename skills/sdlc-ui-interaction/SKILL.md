@@ -23,21 +23,21 @@ license: MIT
 
 ## Shared principles
 
-### Usage
+### Applying the principles
 
-- Select principles for the target platform and scenario. Give general guidance directly when no specific product is identified.
+- Apply principles relevant to the requested work, target platform, and scenario.
 - Explain applicability conditions and tradeoffs; do not prescribe a particular visual style universally.
-- Before quoting numeric values, verify the target platform's standards, units, and applicability.
+- Before citing numeric requirements or recommendations, verify their source, units, and applicability to the target platform.
 
 ### Design principles
 
-- **Tasks and entry points**: organize the UI by user goals and operation order. Prioritize current tasks, make primary entry points recognizable, name actions and objects in buttons, and label ambiguous icons.
+- **Tasks and entry points**: organize the UI by user goals and operation order. Prioritize information and actions needed for the current task, make primary entry points recognizable, use button labels that identify actions and their objects, and label ambiguous icons.
 - **Cognitive load**: present options and context needed for decisions, reduce memorization and repeated input, and let users inspect and change defaults. Do not hide necessary information merely to reduce steps.
 - **Consistency and style**: follow platform conventions and consistent control behavior. Align icons, components, and decoration with product purpose and existing design conventions; prevent decoration from obstructing content or actions.
-- **Status and waiting feedback**: show location, processing status, and outcomes. Distinguish loading, empty data, and failure. Respond promptly, provide credible status for long operations, and actual progress when measurable. Scale feedback to importance without frequent interruption.
-- **User control**: provide discoverable exit, cancel, and return actions. Support undo and redo where appropriate and clarify their effects. Explain consequences before irreversible actions.
-- **Error prevention and recovery**: state input and operation constraints in advance; require confirmation according to consequences. Validate at appropriate times without interrupting incomplete input. On failure, preserve valid input, locate the issue, explain why it occurred, and offer recovery.
-- **Typography**: choose fonts and sizes for reading conditions. Establish hierarchy through size and weight; keep body and supporting text readable, including when enlarged, without clipping or hiding necessary content or controls.
+- **Status and waiting feedback**: show location, processing status, and outcomes. Distinguish loading, empty data, and failure. Respond promptly to actions; for long operations, provide reliable status and show actual progress when measurable. Scale feedback to importance without frequent interruption.
+- **User control**: provide discoverable exit, cancel, and return actions. Support undo and redo where appropriate and clarify which changes they affect. Explain consequences before irreversible actions.
+- **Error prevention and recovery**: state input and operation constraints in advance; require confirmation when the consequences warrant it. Validate at appropriate times without interrupting incomplete input. On failure, preserve valid input, identify the issue and its location, explain known causes without presenting guesses as facts, and offer a recovery path.
+- **Typography**: choose fonts, sizes, and line spacing for reading conditions. Establish hierarchy through size and weight; keep body and supporting text readable, including when enlarged, without clipping or hiding necessary content or controls.
 - **Layout and spacing**: use position and grouping to express importance and relationships. Apply alignment and spacing consistently. Match density to reading, comparison, and operation needs; avoid competing emphasis.
 - **Color and contrast**: define primary, supporting, and status colors and use them consistently. Ensure adequate contrast for text, controls, and states; supplement color with text or shapes.
 - **Interaction targets**: size and space targets for mouse, touch, or other input methods, making them easy to select without accidental adjacent activation.

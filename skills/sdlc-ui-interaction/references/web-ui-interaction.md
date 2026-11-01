@@ -8,5 +8,5 @@
 ## Platform principles
 
 - **History and tabs**: make navigation match expectations for browser back and forward. Preserve native behavior such as opening links in new tabs; avoid duplicate or meaningless history entries.
-- **Responsive layout**: reflow for available viewport and content; support text scaling and orientation changes. Allow local scrolling only for content requiring two-dimensional presentation; avoid whole-page horizontal scrolling.
-- **Link and button semantics**: use native links for navigation and native buttons for actions. Do not simulate controls using elements without interaction semantics.
+- **Responsive layout**: reflow for available viewport and content; support text scaling and orientation changes. Avoid whole-page horizontal scrolling; when content requires a two-dimensional layout, keep necessary horizontal scrolling within that content area.
+- **Link and button semantics**: use native links for navigation and native buttons for actions. Do not simulate controls with elements that lack the required interaction semantics and behavior.
