@@ -8,15 +8,15 @@ license: MIT
 
 ## Applicability
 
-- Apply automatically when MySQL is established by the task or project and work involves designing, writing, modifying, reviewing, or optimizing models, tables, SQL, indexes, transactions, or concurrency. Explicit invocation is unnecessary.
+- Apply automatically when the task or project establishes MySQL as the target database and involves designing, writing, modifying, reviewing, or optimizing data models, tables, SQL, indexes, transactions, or concurrency control. Explicit invocation is unnecessary.
 - Use independently of the SDLC workflow. Do not select MySQL for generic database work or apply to tasks concerning only other databases.
 
 ## Usage
 
 - Use official MySQL 8.4 semantics as the validation baseline without restricting the deployed version. Verify feature support, constraint enforcement, and deprecation in the actual target version when differences matter.
-- Establish business meaning, integrity, main access patterns, scale/growth, concurrency, and consistency as needed. Prefer existing design/load evidence; explain assumptions and impacts when key conditions are absent.
-- Apply transaction and concurrency rules to local InnoDB transactions. Explicitly identify bans on queries within transactions, `CHECK`, foreign keys, and stored procedures as project conventions, not MySQL limitations.
-- Assume a record is not modified multiple times within one millisecond; such repeated changes are outside this specification's premise. This does not imply the database guarantees `updated_at` is a unique version identifier.
+- Establish the business meaning, integrity requirements, main access patterns, data scale and growth, concurrency, and consistency requirements relevant to the task. Use existing designs and workload evidence where available; state assumptions and their impact when key information is missing.
+- Apply transaction and concurrency rules to local InnoDB transactions. Explicitly identify the bans on queries within transactions, `CHECK` constraints, foreign-key constraints, and stored procedures as project conventions rather than MySQL limitations.
+- Assume a record is modified at most once per millisecond. This assumption does not guarantee that `updated_at` is a non-reused version identifier; apply the conditions under [timestamp checks](references/mysql-design-examples.md#timestamp-checks) before using it for concurrency control.
 - Follow applicable rules within task scope. If meaning or application is unclear, read the corresponding topic in [MySQL design examples](references/mysql-design-examples.md), not all examples by default.
 
 ## Data modeling
@@ -25,11 +25,11 @@ license: MIT
 
 - **Row grain**: define the business object, relationship, or event represented by a row; keep grain consistent within a table. See [examples](references/mysql-design-examples.md#row-grain).
 
-- **Relationships and uniqueness**: define minimum and maximum cardinality on both sides. Store one-to-many references on the many side, enforce one-to-one with unique references, and use junction tables for many-to-many. For repeated associations of the same objects, define each event's meaning, identity, and uniqueness scope. See [examples](references/mysql-design-examples.md#relationships-and-uniqueness).
+- **Relationships and uniqueness**: define minimum and maximum cardinality on both sides. Store one-to-many references on the many side, use unique references to limit one-to-one relationships to at most one match, and use junction tables for many-to-many relationships. For repeated associations of the same objects, define each association's business meaning, identity, and uniqueness scope. See [examples](references/mysql-design-examples.md#relationships-and-uniqueness).
 
 - **Field ownership**: place a field with the object, relationship, or event determining its value; avoid duplicating current facts. Keep historical snapshots at event-time values, unchanged by current-value updates. See [examples](references/mysql-design-examples.md#field-ownership).
 
-- **Referential integrity**: define target existence/state conditions for new or changed references and handling of existing references after target deletion/invalidation. Enforce through write paths under Keys and constraints and Concurrency control. See [examples](references/mysql-design-examples.md#referential-integrity).
+- **Referential integrity**: define whether a referenced target must exist and which states it must satisfy when creating or changing a reference. Define how existing references are handled when the target is deleted or becomes invalid. Enforce these requirements through business write flows under [keys and constraints](#keys-and-constraints) and [concurrency control](#concurrency-control). See [examples](references/mysql-design-examples.md#referential-integrity).
 
 ## Table design
 
@@ -45,7 +45,7 @@ license: MIT
 
 - Keep related columns' types and signedness compatible and as consistent as possible.
 
-- Represent exact money with explicitly sized `DECIMAL` or integers in a defined smallest unit; define currency and rounding. Preserve exact representation through storage, parameters, and calculations; do not calculate in floating point before conversion.
+- Represent exact monetary amounts with `DECIMAL` of explicit precision and scale, or integers in a defined smallest unit; define the currency and rounding rules. Preserve exact representation through storage, parameters, and calculations; do not calculate in floating point before conversion.
 
 - Do not set deprecated `UNSIGNED` on `FLOAT`, `DOUBLE`, or `DECIMAL`.
 
@@ -63,7 +63,7 @@ license: MIT
 
 ### Keys and constraints
 
-- Explicitly define stable, short primary keys for InnoDB. Secondary records contain primary-key columns, so wide primary keys increase secondary-index cost.
+- Explicitly define stable, short primary keys for InnoDB tables. Secondary-index records contain primary-key columns, so wide primary keys increase secondary-index cost.
 
 - Mark required fields `NOT NULL`.
 
@@ -71,7 +71,7 @@ license: MIT
 
 - Enforce business uniqueness with unique indexes, not query-before-insert. Unique indexes allow multiple `NULL` values.
 
-- Enforce uniqueness for idempotency identifiers within business-operation/tenant scope, with all participating columns `NOT NULL`.
+- Enforce uniqueness for idempotency identifiers within the applicable business-operation and tenant scope, with all participating columns `NOT NULL`.
 
 - Do not use foreign-key constraints or cascades; preserve referential integrity through business write flows.
 
@@ -111,7 +111,7 @@ license: MIT
 
 - Distinguish bytes, characters, and user-visible graphemes in length checks. `LENGTH` counts bytes and `CHAR_LENGTH` characters, not visible graphemes.
 
-- With `NULL` in a `NOT IN` set, an unmatched result may be `UNKNOWN`; do not treat it as ordinary non-membership.
+- If the set used by `NOT IN` contains `NULL`, a value matching no member may yield `UNKNOWN`; do not interpret this as confirmed non-membership.
 
 - `COUNT(DISTINCT col)` excludes `NULL`; its multi-column form counts distinct combinations only when all participating columns are non-`NULL`.
 
@@ -123,25 +123,25 @@ license: MIT
 
 ### Transaction management
 
-- **Statements inside transactions**: perform queries, business validation, and write preparation outside explicit transactions. Inside, allow only necessary modifications and transaction control; forbid ordinary/locking queries and subqueries or other query parts within writes. See [examples](references/mysql-design-examples.md#statements-inside-transactions).
+- **Statements inside transactions**: perform queries, business validation, and write preparation outside explicit transactions. Inside the transaction, allow only necessary data modifications and transaction control. Forbid ordinary queries, locking queries, and query components within writes, including subqueries. See [examples](references/mysql-design-examples.md#statements-inside-transactions).
 
 - **Transaction connection**: writes that must succeed together must not escape the transaction through connection switching, asynchronous execution, or propagation settings. See [examples](references/mysql-design-examples.md#transaction-connection).
 
 - **Implicit commits**: do not simulate nested transactions with `START TRANSACTION` or switch `autocommit` from 0 to 1 between business writes; both implicitly commit. Keep DDL such as `ALTER TABLE` and `TRUNCATE TABLE` out of business write transactions. See [examples](references/mysql-design-examples.md#implicit-commits).
 
-- **Failure handling**: on required-write errors or unmet business conditions, stop later writes and roll back the entire transaction. Do not assume a failed statement undoes earlier writes. After deadlocks or lock timeouts, retry the whole transaction only finitely after full rollback and only when safe. For uncertain commits, verify using idempotency identifiers first. See [examples](references/mysql-design-examples.md#failure-handling).
+- **Failure handling**: on required-write errors or unmet business conditions, stop later writes and roll back the entire transaction. Do not assume a failed statement undoes earlier writes. After a deadlock or lock timeout, ensure full rollback and retry the whole transaction only when safe, with a finite retry limit. For uncertain commits, verify using idempotency identifiers first. See [examples](references/mysql-design-examples.md#failure-handling).
 
 - **External operations**: local transactions do not atomically commit/roll back external calls or message sending. See [examples](references/mysql-design-examples.md#external-operations).
 
 ### Concurrency control
 
-- **Business-conditional updates**: prefer write-time business-field predicates. When new values depend on reads outside the transaction, check relevant old values or a valid version identifier to avoid overwriting concurrent changes. Do not add explicit transactions when one conditional statement suffices. See [examples](references/mysql-design-examples.md#business-conditional-updates).
+- **Business-conditional updates**: prefer write-time business-field predicates. When computing new values from data read outside the transaction, include predicates checking the relevant original values or a valid version identifier to avoid overwriting concurrent changes. Do not add explicit transactions when one conditional statement suffices. See [examples](references/mysql-design-examples.md#business-conditional-updates).
 
 - **Timestamp checks**: if suitable business fields are absent, match the original `updated_at` only if every relevant modification changes it and the old value cannot be reused during validation. Preserve milliseconds in reads, writes, serialization, and binding. Otherwise use a non-reused version identifier or another concurrency mechanism. See [examples](references/mysql-design-examples.md#timestamp-checks).
 
 - **Referential integrity**: use conditional updates, uniqueness, and necessary transactions to coordinate reference creation/change against target deletion/invalidation. See [examples](references/mysql-design-examples.md#concurrent-customer-reference-maintenance).
 
-- **Update results**: interpret conditional-update counts using the driver's affected-row semantics. An unmet predicate is not success. See [examples](references/mysql-design-examples.md#update-results).
+- **Update results**: interpret conditional-update results using the driver's matched-row or changed-row semantics. An unmet predicate is not success. See [examples](references/mysql-design-examples.md#update-results).
 
 - **Write order**: competing transactions should use consistent table/record order. SQL text order does not establish actual lock order. See [examples](references/mysql-design-examples.md#write-order).
 
@@ -193,9 +193,12 @@ license: MIT
 
 #### Applicability and classification
 
-- Perform dedicated performance verification only for complex SQL whose main costs cannot reliably be inferred from schema, indexes, and SQL. Do not additionally require plans, performance datasets, or load tests for non-complex SQL.
+- For this skill, classify SQL as complex when its main execution costs cannot reliably be inferred from the schema, indexes, and SQL. Require dedicated performance verification only for complex SQL; do not require additional execution plans, performance datasets, or load tests for non-complex SQL.
 
-- Classify as complex when static analysis cannot establish scans, table lookups, or index choices affected by distribution/parameters; intermediate results or execution counts from joins/subqueries/aggregation/deduplication; or sorting, transfer, and batch-write costs determined by actual scale/field sizes.
+- Classify SQL as complex when static analysis leaves material uncertainty about any of these costs:
+  - Scans, table lookups, or index choices affected by data distribution and parameters.
+  - Intermediate-result sizes or execution counts from joins, subqueries, aggregation, or deduplication.
+  - Sorting, transfer, or batch-write costs determined by actual data scale and field sizes.
 
 - Do not classify by statement length, join count, or returned rows alone. See [classification examples](references/mysql-design-examples.md#classifying-complex-sql).
 
@@ -203,7 +206,7 @@ license: MIT
 
 - Use real MySQL with the target version/engine and data covering the scale, distribution, parameters, and field sizes causing uncertainty, not empty databases or a few sample rows.
 
-- Use `EXPLAIN` for paths and `EXPLAIN ANALYZE` as needed for actual rows, loops, and time. The latter executes statements: assess costs and effects first. See [official EXPLAIN documentation](https://dev.mysql.com/doc/refman/8.4/en/explain.html).
+- Use `EXPLAIN` to inspect access paths. Use `EXPLAIN ANALYZE` as needed for actual rows, loops, and time on supported statements; it executes the statement, so assess costs and effects first. See [official EXPLAIN documentation](https://dev.mysql.com/doc/refman/8.4/en/explain.html).
 
 - Measure actual requests and complete business-path latency, including transfer, reading, and application computation, not just first-row or individual-query time. Add load validation only for key concurrent paths. See [verification example](references/mysql-design-examples.md#verification-using-actual-data).
 

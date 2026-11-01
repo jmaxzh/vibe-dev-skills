@@ -685,7 +685,7 @@ SELECT id, name FROM product WHERE name LIKE '%abc%';
 
 The second query requires substring `abc` anywhere. Tokenized full-text search uses terms/parser rules and is not equivalent. Preserve matching semantics before evaluating full-text or dedicated search. For small/infrequent queries, retaining an acceptable measured scan may be reasonable. See [range optimization](https://dev.mysql.com/doc/refman/8.4/en/range-optimization.html).
 
-These five groups explain principles, not real-MySQL measurements. Classify under [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification); verify complex SQL before adopting candidates.
+These index examples explain principles, not real-MySQL measurements. Classify under [execution plans and performance verification](../SKILL.md#execution-plans-and-performance-verification); verify complex SQL before adopting candidates.
 
 
 #### Index reuse and changes
@@ -1029,7 +1029,7 @@ This reduces repeated transfer but adds a round trip and may mix times: old desc
 
 If a consistent view is required, use one join meeting the target isolation level's consistent-read requirements and assess transfer costs. Do not put multiple split reads inside explicit transactions. Alternatively validate a whole-order/items version:
 
-Prerequisites: every order-content/item change commits with incrementing the owning order's integer `content_revision` in the same write transaction. Initialize versions for new orders; never reuse deleted IDs or roll back/reuse versions. All following reads are autocommit consistent reads from the same primary, not caches or asynchronous replicas.
+Prerequisites: every order-content/item change commits with incrementing the owning order's integer `content_revision` in the same write transaction. Initialize versions for new orders; never reuse deleted order IDs or reset/reuse committed version values. All following reads are autocommit consistent reads from the same primary, not caches or asynchronous replicas.
 
 1. Read the order page including each version.
 2. Batch-read items by selected IDs.
