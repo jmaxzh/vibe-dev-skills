@@ -14,4 +14,4 @@
 
 脚本及测试只在[英文 CC Connect 技能目录](../../skills/cc-connect-integration/scripts/)维护；本文档体系中的相对执行命令以英文技能目录为工作位置，不复制代码到译文目录。
 
-参阅[维护规则](AGENTS.zh-CN.md)、[分发说明](docs/distribution.md)、[提交准备](docs/submission.md)和[验证记录](docs/verification.md)。
+参阅[维护规则](AGENTS.zh-CN.md)、[分发说明](docs/distribution.md)和[验证记录](docs/verification.md)。

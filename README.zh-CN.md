@@ -91,7 +91,7 @@ npx skills add jmaxzh/vibe-dev-skills \
 
 ## 分发与许可证
 
-Codex 与 Claude Code 使用同一个五技能插件；skills.sh 支持 GitHub 安装与发现，SkillsMP 索引公开源技能。市场安装不等于公共目录审核通过。见[分发说明](translations/zh-CN/docs/distribution.md)、[提交准备](translations/zh-CN/docs/submission.md)及[验证记录](translations/zh-CN/docs/verification.md)。
+Codex 与 Claude Code 使用同一个五技能插件；skills.sh 支持 GitHub 安装与发现，SkillsMP 索引公开源技能。见[分发说明](translations/zh-CN/docs/distribution.md)及[验证记录](translations/zh-CN/docs/verification.md)。
 
 采用 [MIT](LICENSE)。所有者已确认改编的 CC Connect 镜像脚本也可按 MIT 分发，见[来源与许可说明](translations/zh-CN/docs/provenance.md)。
 

@@ -13,17 +13,7 @@ python3 -B scripts/smoke_install.py --native
 
 The smoke check requires Node/npm, network access for `skills@1.7.4`, and the Codex/Claude CLIs for `--native`. It exercises default/full-depth discovery, the five-skill suite, the workflow pair, four individual specialists, and a deliberately incomplete workflow installation. Its missing-dependency result is a file/composition check, not proof of model compliance. Native checks register and install locally and inspect actual skill inventories. Codex app-server is queried without creating a model turn.
 
-The report is written to `dist/install-report.json`. A timeout or unavailable CLI is a failure when `--native` was requested; inspect the report rather than treating skipped or failed execution as passed. GitHub Actions runs the portable checks, script tests, skills CLI smoke check, and ZIP build; it does not claim to test native clients absent from the runner.
-
-## Build the review package
-
-```sh
-python3 -B scripts/package.py
-```
-
-Output: `dist/vibe-dev-skills-0.1.0.zip`. The archive contains root `plugin.json`, the Claude plugin manifest, all five English skills with references/scripts/licenses, the root MIT notice, and original icon assets. It excludes source-control state, maintenance translations, repository tools, and development records. Identical inputs produce identical bytes. An existing different output is not overwritten; choose a new `--output` path or explicitly remove your old generated package.
-
-The build validates source structure first. It neither uploads nor submits the package. CI artifacts are review artifacts, not a public release.
+The report is written to `dist/install-report.json`. A timeout or unavailable CLI is a failure when `--native` was requested; inspect the report rather than treating skipped or failed execution as passed. GitHub Actions runs the portable checks, script tests, skills CLI smoke check, and installation-report upload; it does not claim to test native clients absent from the runner.
 
 ## Check native clients manually
 

@@ -1,19 +1,13 @@
-"""Behavioral checks for supported installed combinations and release boundaries."""
-import importlib.util
+"""Checks for supported installed combinations and distribution boundaries."""
 from pathlib import Path
 import shutil
 import sys
 import tempfile
 import unittest
-import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import validate
-
-spec = importlib.util.spec_from_file_location("plugin_package", ROOT / "scripts/package.py")
-plugin_package = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(plugin_package)
 
 
 class DistributionTests(unittest.TestCase):
@@ -66,32 +60,8 @@ class DistributionTests(unittest.TestCase):
         (fixture / "assets/icon.png").unlink()
         errors = validate.validate(fixture)
         self.assertIn("plugin manifest mismatch: version", errors)
-        self.assertIn("OpenAI composerIcon: expected a bundled asset", errors)
+        self.assertIn("Codex composerIcon: expected a bundled asset", errors)
 
-    def test_release_is_complete_deterministic_and_english_only(self):
-        first = plugin_package.build(ROOT, self.work / "first.zip")
-        second = plugin_package.build(ROOT, self.work / "second.zip")
-        self.assertEqual(first.read_bytes(), second.read_bytes())
-        with zipfile.ZipFile(first) as archive:
-            names = set(archive.namelist())
-            self.assertIn("plugin.json", names)
-            self.assertIn(".claude-plugin/plugin.json", names)
-            self.assertIn("LICENSE", names)
-            self.assertEqual(sum(p.endswith("/SKILL.md") for p in names), 5)
-            self.assertEqual(sum(p.endswith("/scripts/service.py") for p in names), 1)
-            for name in validate.SKILLS:
-                self.assertIn(f"skills/{name}/LICENSE", names)
-            self.assertFalse(any(p.startswith(("translations/", "docs/", "tests/", ".git/")) for p in names))
-            self.assertFalse(any("__pycache__" in p or "SKILL.zh-CN.md" in p for p in names))
-            archive.extractall(self.work / "unpacked")
-        self.assertEqual(validate.installation_errors(self.work / "unpacked/skills"), [])
-
-    def test_packager_preserves_existing_different_output(self):
-        output = self.work / "existing.zip"
-        output.write_bytes(b"keep me")
-        with self.assertRaisesRegex(ValueError, "different content"):
-            plugin_package.build(ROOT, output)
-        self.assertEqual(output.read_bytes(), b"keep me")
 
 
 if __name__ == "__main__":

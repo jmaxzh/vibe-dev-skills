@@ -15,17 +15,7 @@ python3 -B scripts/smoke_install.py --native
 
 冒烟检查需要 Node/npm、获取 `skills@1.7.4` 的网络连接；`--native` 还需要 Codex 和 Claude CLI。检查默认及完整深度发现、五技能套件、工作流双技能组合、四项专项单装，以及故意缺少依赖的工作流安装。缺失依赖结果是文件和组合校验，不证明模型遵循指令。原生检查执行本地注册、安装并读取真实技能清单；Codex app-server 查询不创建模型回合。
 
-报告写入 `dist/install-report.json`。指定 `--native` 后，超时或 CLI 不可用视为失败，不将跳过或失败记作通过。GitHub Actions 执行便携检查、脚本测试、skills CLI 冒烟检查及 ZIP 构建，不声称覆盖运行器中不存在的原生客户端。
-
-## 构建审阅包
-
-```sh
-python3 -B scripts/package.py
-```
-
-产物为 `dist/vibe-dev-skills-0.1.0.zip`，包含根 `plugin.json`、Claude 插件清单、五项英文技能及参考资料、脚本、许可证、根 MIT 声明和原创图标。排除版本控制数据、维护译文、仓库工具与开发记录。同样输入生成相同字节；不覆盖内容不同的既有产物，使用新的 `--output` 路径或明确删除旧生成包后重建。
-
-构建先校验源结构，不上传或提交。CI 产物用于审阅，不等于公开发布。
+报告写入 `dist/install-report.json`。指定 `--native` 后，超时或 CLI 不可用视为失败，不将跳过或失败记作通过。GitHub Actions 执行便携检查、脚本测试、skills CLI 冒烟检查及安装报告上传，不声称覆盖运行器中不存在的原生客户端。
 
 ## 手动检查原生客户端
 

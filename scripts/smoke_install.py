@@ -98,7 +98,7 @@ def main():
     parser.add_argument("--source", help="Optional Git URL/owner/repo for skills CLI checks; defaults to local checkout")
     parser.add_argument("--report", type=Path, default=ROOT / "dist/install-report.json")
     args = parser.parse_args()
-    report = {"checks": [], "model_behavior": "not tested", "public_submission": "not attempted"}
+    report = {"checks": [], "model_behavior": "not tested"}
     try:
         with tempfile.TemporaryDirectory(prefix="vibe-install-") as temp:
             work = Path(temp) / "work"

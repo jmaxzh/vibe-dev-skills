@@ -91,7 +91,7 @@ Keep corresponding translations synchronized in the same change. Runtime scripts
 
 ## Distribution and license
 
-Codex and Claude Code use the same five-skill plugin. skills.sh supports GitHub installation and discovery; SkillsMP indexes public source skills. Marketplace installation is separate from public-directory approval. See [distribution](docs/distribution.md), [submission preparation](docs/submission.md), and [verification results](docs/verification.md).
+Codex and Claude Code use the same five-skill plugin. skills.sh supports GitHub installation and discovery; SkillsMP indexes public source skills. See [distribution](docs/distribution.md) and [verification results](docs/verification.md).
 
 [MIT](LICENSE). The owner confirmed that the adapted CC Connect mirror scripts may also be distributed under MIT; see [source and license notes](docs/provenance.md).
 

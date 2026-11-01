@@ -142,11 +142,11 @@ def validate(root=ROOT):
     if not re.fullmatch(r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)", portable.get("version", "")):
         errors.append("plugin version must be a stable semantic version")
     interface = portable.get("extensions", {}).get("com.openai", {}).get("interface", {})
-    for field in ("composerIcon", "logo"):
+    for field in ("composerIcon",):
         url = interface.get(field, "")
         asset = (root / url).resolve()
         if not url.startswith("./assets/") or not asset.is_relative_to(root.resolve()) or not asset.is_file():
-            errors.append(f"OpenAI {field}: expected a bundled asset")
+            errors.append(f"Codex {field}: expected a bundled asset")
     for name in (".agents/plugins/marketplace.json", ".claude-plugin/marketplace.json"):
         market = json.loads((root / name).read_text())
         if market.get("name") != portable["name"] or len(market.get("plugins", [])) != 1:
