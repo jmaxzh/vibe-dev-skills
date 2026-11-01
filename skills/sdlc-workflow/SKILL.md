@@ -10,9 +10,9 @@ license: MIT
 
 Intent → requirements → technical design → implementation.
 
-- Once enabled, determine required stages from the user's goal. Fill missing or invalid prerequisites within the current task scope in requirements → technical design → implementation order, without requiring separate invocation for each stage.
+- Once explicitly invoked, determine the required stages from the user's goal. Complete missing prerequisite work or revise prerequisite results that no longer apply, in requirements → technical design → implementation order and within the current task scope. Do not require a separate invocation for each stage.
 - Reuse requirements, designs, and decisions still applicable in context and existing materials. Judge whether they support subsequent work; do not repeat work solely because no standalone document exists.
-- When prerequisites are met, proceed continuously through the stage requested by the user. Do not ask for confirmation at every stage or automatically expand beyond it. Handle critical ambiguity under the relevant stage's clarification rules and major tradeoffs under Delivery quality; pause only affected work.
+- When prerequisites are met, continue through completion of the stage requested by the user. Do not ask for confirmation at every stage or automatically continue into later stages. Handle critical ambiguity under the relevant stage's clarification rules and major tradeoffs under Delivery quality; pause only affected work.
 
 Read and follow the reference for each stage actually performed:
 
@@ -29,7 +29,7 @@ The following independent, optional capabilities require explicit user requests;
 
 ### Applicability
 
-- These general rules govern conversational answers and deliverables produced while executing this skill. Deliverables mean code, documents, and other artifacts, excluding ordinary conversational answers. Each section applies to its stated objects.
+- These general rules apply while executing this skill. Conversational answers are responses in chat; deliverables are code, documents, and other artifacts. Each section applies to the objects it names.
 
 ### Terms and expression in answers
 
@@ -54,7 +54,7 @@ The following independent, optional capabilities require explicit user requests;
 - Prioritize correctness, completeness, and maintainability of the final deliverable, choosing a reasonable solution directly.
 - Revise existing deliverables incrementally, retaining valid structure and information.
 - For code, configuration, and other non-document artifacts, correct errors within scope; replace obsolete, conflicting, or superseded parts and remove duplicated or unrelated content. Document changes follow Instruction and Documentation Design Principles through the read-on-demand rules.
-- Proceed with necessary organization and responsibility changes within authorization. Ask only for choices exceeding authorization, changing requirements, or involving major tradeoffs requiring the user. Reuse existing authorization.
+- Proceed within existing authorization with necessary changes to structure and responsibility boundaries. Ask the user only for decisions that exceed authorization, change requirements, or involve major tradeoffs requiring their judgment.
 - Remove ineffective code, documents, configuration, and tests left by trial and error, misunderstandings, corrections, rollbacks, or abandoned approaches. Retain necessary historical records and verification evidence.
 
 ## Skill dependencies

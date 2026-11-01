@@ -12,7 +12,7 @@
 
 - Check project users, problems to solve, and expected outcomes individually.
 - Check responsibilities, capabilities, covered scenarios, and exclusions individually.
-- Extract goals and scope from existing requirements and materials; reuse explicit or confirmed information without asking again. Clarify unresolved matters under Execution scope and order. Do not skip remaining items because some have already been settled; cover all elements above.
+- Derive goals and scope from existing requirements and materials. Reuse explicit or confirmed information without asking again; clarify unresolved matters under Execution scope and order. Cover all elements above, including those not yet settled.
 
 ## Establish the knowledge base
 
@@ -20,7 +20,7 @@
 
 - Follow [project knowledge-base conventions](project-knowledge-base.md).
 - Include the following required content, grouped by subject rather than necessarily as separate documents:
-  - Project goals and scope, checked individually; reuse explicit or confirmed user information.
+  - Project goals and scope established above.
   - Knowledge-base directory structure, subject divisions, ownership, and navigation.
   - Technology selection: purposes, reasons, and constraints of the foundation and selected technologies.
   - Static analysis tools and rules for each stack: coverage, rule principles, execution entry points, and configuration sources.
@@ -121,7 +121,7 @@ project/                         # Partial multi-application example
 - Cover maintained source and relevant engineering configuration for actual stacks, reusing foundation rules. Static checks include formatting, syntax, types, analysis, and consistency of dependencies, documents, and declarations. Behavioral tests, coverage, and runtime race detection belong to testing and acceptance.
 - Distinguish production, test, development-tool, and generated code. Define category-specific coverage and gates. Exclude generated code from maintained-code size metrics, but retain applicable compilation/type checks.
 - Centralize shared rules per stack and adapt compilation environment, source scope, and architecture constraints through project configuration.
-- Select tools, versions, rules, and exceptions independently. Specify checked objects, tools, measurement definitions, thresholds, comparisons, failure conditions, and configuration sources. Explain inapplicable items without omitting required applicable checks.
+- Choose tools, versions, rules, and exceptions within authorization. For each check, specify its objects, tools, measurement definitions, thresholds, comparison operators, failure conditions, and configuration sources. Explain why any listed check is inapplicable; retain all required applicable checks.
 - Maintain exact rules and parameters in engineering configuration or check implementations; explain principles and link sources in the knowledge base.
 - Provide a unified static-check entry point with necessary project selection, avoiding repeated shared steps. Require zero blocking violations and explicit warning and vulnerability policies.
 - Return nonzero for blocking violations, missing or failed tools, invalid reports, or uncovered required source. Report project, step, and cause; do not call it passed.
