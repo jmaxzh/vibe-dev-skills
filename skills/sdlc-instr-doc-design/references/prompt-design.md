@@ -5,37 +5,40 @@ When designing, writing, modifying, or reviewing instructions, prompts, skills, 
 ## General principles
 
 1. Minimum sufficient instructions: retain only instructions affecting execution or results; avoid repetition, filler, and unnecessary constraints.
-2. Explicit and actionable: use concise, clear imperatives; retain actors, conditions, operations, and outcomes necessary to understand the task.
+2. Explicit and actionable: use concise, clear imperatives; identify the actors, objects, conditions, actions, and outcomes needed to carry out the task.
 3. Avoid repeating general knowledge: do not restate basic knowledge or capabilities the model already has, but retain task-specific constraints.
-4. Load by need: general dimensions always apply; scenario-specific dimensions apply only when their activation conditions hold.
-5. Clear boundaries: separate instructions from data; constrain evidence, permissions, and uncertainty only as required by the task.
-6. Outcome-oriented: specify necessary results and constraints first; do not restrict processing steps without reason.
+4. Select dimensions as needed: use the general dimensions to assess every prompt; apply scenario-specific dimensions only when their activation conditions hold.
+5. Clear boundaries: separate instructions from data; specify evidence requirements, permissions, and handling of uncertainty only as required by the task.
+6. Outcome-oriented: specify expected results, necessary constraints, and completion criteria.
+7. Context, not Control: provide relevant background, facts, reasons for constraints, and tradeoffs to support judgment. Let the model choose methods unless task dependencies, interface requirements, or identified risks require specific steps.
+
+Concept references: [Netflix: Context, not Control](https://www.jobs.netflix.com/culture); [ByteDance: Context over Control](https://www.bytedance.com/about).
 
 ## General design dimensions
 
-These dimensions apply to all prompts and help assess sufficiency. They do not require separate instructions for every dimension; do not add requirements already explicit in the task or context.
+Use these dimensions to assess whether a prompt provides sufficient guidance. They do not require a separate instruction for each dimension; do not repeat requirements already explicit in the task or context.
 
 | Dimension | Recommended | Avoid | Reason and applicability |
 | --- | --- | --- | --- |
-| Task definition | Specify goals, objects, outcomes, and completion criteria as needed | Vague goals, unclear objects, unrelated background | Makes task and completion requirements understandable |
-| Instruction clarity | Use concise, executable instructions with necessary actors, conditions, operations, and results | Ambiguity, missing conditions, non-operational wording | Reduces ambiguity and unnecessary inference |
+| Task definition | Specify goals, objects, outcomes, and completion criteria, with context and tradeoffs needed for judgment | Vague goals, unclear objects, missing decision context, unrelated background | Supports informed method choices and makes completion requirements understandable |
+| Instruction clarity | Use concise, actionable instructions identifying necessary actors, objects, conditions, actions, and results | Ambiguity, missing conditions, requirements that do not guide action | Reduces ambiguity and unnecessary inference |
 | Instruction length | Use minimum sufficient instructions; retain conditions affecting execution or outcomes | Synonymous repetition, basic knowledge, generic admonitions, filler | Reduces redundancy and overconstraint without losing specific rules |
-| Input organization | Separate instructions and content; use fields or separators when necessary | Mixing instructions with data or forcing structure onto simple input | Clarifies the processing object without meaningless structure |
-| Output constraints | Specify required content and necessary format, length, or structure | Missing usage-critical requirements or unnecessary formatting constraints | Ensures usable results without gratuitous restrictions |
+| Input organization | Separate task instructions from the content to process; use fields or separators when necessary | Mixing instructions with data or imposing unnecessary structure on simple input | Makes clear what to process without unnecessary structure |
+| Output constraints | Specify required content; constrain format, length, or structure only as needed for use | Omitting requirements that affect usability or adding unnecessary formatting constraints | Ensures usable results without unnecessary restrictions |
 
 ## Scenario-specific dimensions
 
-Add instructions for these dimensions only when the scenario applies and existing wording does not express the requirement sufficiently.
+Add instructions for these dimensions only when the activation scenario applies and the existing prompt does not adequately express the requirement.
 
 | Dimension | Activation scenario | Recommended | Avoid |
 | --- | --- | --- | --- |
-| Task decomposition | Distinct stages or clear dependencies | Split necessary steps with goals and outcomes | Requiring stepwise execution indiscriminately |
+| Task decomposition | Dependencies, interface requirements, or identified risks require distinct stages | Specify necessary stages and their purpose, dependencies, and outcomes; leave other method choices open | Prescribing execution order without a concrete need |
 | Instruction hierarchy | Different sources, priorities, or uses of instructions and materials | Clarify roles, priority, and applicability | Mixing instructions with data or letting lower-priority content override higher-priority rules |
 | Reasoning guidance | A particular analytical method, reasoning framework, or verification process is required | Specify necessary analytical perspectives, methods, and verifiable outcomes | Universally requiring step-by-step reasoning or full internal chains of thought |
 | Few-shot examples | Rules alone do not clarify classification boundaries, criteria, or output form | Use a few representative positive, negative, or boundary examples consistent with rules; explain their purpose | Repeated, irrelevant, contradictory examples, or incidental details becoming constraints |
 | Evidence use | Designated sources, factual checks, or citations are required | Specify evidence scope, citation requirements, and source-conflict handling | Unsupported facts, fabricated evidence, or ignored conflicts |
-| Exceptions and uncertainty | Missing information, invalid input, or source conflicts may affect results | Specify necessary exceptions, uncertainty responses, and requirements | Unconditional certainty or hypothetical exception rules without evidence |
-| Tool-use instructions | External tools are allowed or required | Specify activation, purpose, use of results, and necessary confirmation | Fabricated results, guessed required parameters, or expanded permissions |
+| Exceptions and uncertainty | Missing information, invalid input, or source conflicts may affect results | Specify how to handle relevant exceptions and respond when information is uncertain | Requiring certainty in all cases or adding exception rules without a concrete basis |
+| Tool-use instructions | External tools are allowed or required | Specify when and why to use tools, how to use their results, and when confirmation is required | Fabricated results, guessed required parameters, or expanded permissions |
 | Templates and parameters | Reuse, batch processing, or dynamic filling | Use meaningful variables; separate fixed instructions and variable data | Ambiguous placeholders or ad hoc data concatenation |
 | Roles and audience | Professional responsibilities, audience, or register affect outcomes | Specify necessary responsibilities, audience, and expression requirements | Ineffective expert roleplay or lengthy identity descriptions |
 
@@ -46,7 +49,7 @@ Apply these principles when adding, revising, compressing, or removing prompt co
 | Operation | Principle |
 | --- | --- |
 | Add | Require an explicit task need, identifiable risk, or actual problem; prioritize missing conditions and boundaries |
-| Revise | Remove ambiguity, contradiction, and unclear execution boundaries first; do not expand scope gratuitously |
+| Revise | Resolve ambiguity, contradiction, and unclear execution boundaries; replace unnecessary process controls with context for decisions and outcome requirements without unnecessarily expanding scope |
 | Compress | Remove repetition, filler, and basic-knowledge reminders; retain necessary information |
 | Remove | Remove instructions with no effect on execution or outcomes; do not remove necessary constraints merely because the model knows them |
 | Merge | Merge rules with the same applicability and expected behavior; retain independent rules with distinct conditions, objects, or effects |
@@ -61,6 +64,7 @@ Apply these principles when adding, revising, compressing, or removing prompt co
 - Are scenario-specific dimensions included only when needed?
 - Are instructions, data, and examples clearly separated?
 - Are examples representative, consistent, and free of accidental constraints?
-- Are there unnecessary processing steps, formats, structures, or roles?
+- Is there enough relevant context to choose methods and assess tradeoffs without unnecessary background?
+- Does each prescribed step, format, structure, or role serve a concrete task need, or could context and outcome requirements replace it?
 
-Core principle: use minimum sufficient instructions, explicit goals and necessary boundaries, and scenario-specific additions only as needed. Do not repeat general knowledge or add instructions for formal completeness.
+Core principle: use minimum sufficient instructions, decision-relevant context, explicit goals and necessary boundaries, and scenario-specific additions only as needed. Do not repeat general knowledge or add instructions for formal completeness.
