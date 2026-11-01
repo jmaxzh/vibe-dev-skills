@@ -2,7 +2,7 @@
 
 # 分发验证记录
 
-验证日期：2026-11-01。结果适用于本地分发实现，不代表当前公开 GitHub 内容。
+验证日期：2026-11-01。实现提交 `41f0c4e` 已完成审查、快进合并到 `main` 并推送到 GitHub。下表分别记录本地和远端检查。
 
 | 检查 | 状态与证据 |
 | --- | --- |
@@ -15,10 +15,10 @@
 | CC Connect 隔离回归 | 28 项测试通过，12 个 Python 源码和测试文件与迁移前逐字节一致 |
 | 模型执行与依赖遵循 | 未执行；清单与文件检查不证明模型会加载依赖或在缺失时正确暂停 |
 | CC Connect 真实消息与桌面表现 | 未在部署目标验证 |
-| 远端 GitHub 安装 | 阻塞：本机 DNS 无法解析 `github.com` 和 `api.github.com`，fetch 与 API 访问失败；本次改动未推送 |
-| GitHub CI | 已准备工作流，未远端运行 |
+| 远端 GitHub 安装 | GitHub API 与 HTTPS `ls-remote` 确认 `main` 为 `41f0c4efc9c63b71406cbbe18d505660942b83be`。skills CLI 远端来源冒烟检查两次在发现阶段超时，不能判定远端安装通过 |
+| GitHub CI | 实现提交 `41f0c4e` 的[运行 41294750749](https://github.com/jmaxzh/vibe-dev-skills/actions/runs/41294750749)成功完成 |
 | skills.sh / SkillsMP 收录 | 本次未提交或确认 |
-| OpenAI / Anthropic 公共目录 | 已尝试访问门户：OpenAI 已保存账户认证失败；Anthropic 跳转登录及 Cloudflare 安全验证。未上传或提交，发布者资格未验证 |
+| OpenAI / Anthropic 公共目录 | OpenAI 登录成功，但上传被已验证开发者身份要求阻塞；Anthropic 需要登录。均未上传或提交 |
 
 复现方法见[分发说明](distribution.md)。冒烟报告区分本地 CLI 安装、命名空间发现、缺失依赖文件检查和模型行为。宣称行为验收通过或提交公开目录前，完成新会话的正负面模型检查。
 

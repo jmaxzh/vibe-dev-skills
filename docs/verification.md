@@ -1,6 +1,6 @@
 # Distribution verification
 
-Verification date: 2026-11-01. Results apply to the local distribution implementation, not the currently published GitHub tree.
+Verification date: 2026-11-01. Implementation commit `41f0c4e` was reviewed, fast-forwarded into `main`, and pushed to GitHub. Local and remote checks are distinguished below.
 
 | Check | Status and evidence |
 | --- | --- |
@@ -13,10 +13,10 @@ Verification date: 2026-11-01. Results apply to the local distribution implement
 | CC Connect isolated regression suite | 28 tests passed; all 12 Python source/test files byte-identical to pre-migration originals |
 | Model execution and dependency compliance | Not run: inventory/file checks do not prove a model loads the dependency or pauses correctly when absent |
 | CC Connect real messaging and desktop behavior | Not run on a deployment target |
-| Remote GitHub installation | Blocked: local DNS could not resolve `github.com` or `api.github.com`; fetch and API access failed. This revision is not pushed |
-| CI on GitHub | Workflow prepared, not remotely executed |
+| Remote GitHub installation | GitHub API and HTTPS `ls-remote` confirmed `main` at `41f0c4efc9c63b71406cbbe18d505660942b83be`. The exact skills CLI remote-source smoke check timed out at discovery on two attempts; remote installation is not accepted as passed |
+| CI on GitHub | [Run 41294750749](https://github.com/jmaxzh/vibe-dev-skills/actions/runs/41294750749) completed successfully for implementation commit `41f0c4e` |
 | skills.sh / SkillsMP listing | Not submitted or verified for this revision |
-| OpenAI / Anthropic public directories | Portal access attempted: OpenAI saved-account authentication failed; Anthropic redirected to login and Cloudflare security verification. No package uploaded or submitted; publisher eligibility remains unverified |
+| OpenAI / Anthropic public directories | OpenAI login succeeded, but upload was blocked by the explicit requirement for a verified developer identity. Anthropic requires login. No package uploaded or submitted |
 
 Reproduce the automated checks using [distribution instructions](distribution.md). The smoke report distinguishes local CLI installation, namespaced discovery, and missing-dependency file checks from model behavior. Perform the fresh-session positive/negative model checks before claiming behavioral acceptance or submitting a public listing.
 
