@@ -28,8 +28,8 @@
 
 ## Acceptance
 
-- Execute agreed acceptance scope in batches and record each item's result and evidence. Separate acceptance items do not justify repeating identical setup and tests. Completing one item does not finish the task; sampling must not replace agreed verification.
-- Consolidate issues, fix them together, then determine reverification under Evidence reuse. Address a failure before consolidation only when it blocks subsequent work or undermines evidence credibility; continue unaffected checks.
+- Complete the agreed acceptance scope and record each item's result and evidence. Group checks when they share setup or evidence. Separate acceptance items do not justify repeating identical setup and tests. Completing one item does not finish the task; sampling must not replace agreed verification.
+- Prioritize fixes by impact, dependencies, and shared causes, then determine reverification under Evidence reuse. Address failures that block subsequent work or undermine evidence credibility promptly; continue unaffected checks.
 - Retry only with new facts, an evidence-based new method, changed environment, or a known transient fault with reasonable prospects of success. Otherwise stop repeating attempts. Record blockers, impacts, and unverified scope while continuing independent work. Stopping retries is not passing acceptance.
 - Report implementation and acceptance status separately. Mark failed or unavailable acceptance honestly with reasons; do not claim success.
 - If required items have not passed, explicitly report incomplete work with blockers and impacts; request necessary scope tradeoffs. Deliver promptly once code review, fixes, reverification, and other completion criteria are met; do not expand acceptance without grounds.
@@ -39,20 +39,17 @@
 ### Preparation and assignments
 
 - This section applies to implementation changes affecting behavior, such as code, configuration, and build scripts. Review documentation-only changes under the installed `sdlc-instr-doc-design` skill (see [dependency resolution](../SKILL.md#skill-dependencies)); apply each rule to the corresponding part of mixed changes.
-- After implementation and tests and before delivery, the main agent organizes multiple subagents to review changes; do not skip for simple changes or PR status. Give reviewers the scope, baseline, applicable rules, and summary. Use PR context when present; otherwise review local diffs, including new untracked files.
-- Assign one independent subagent to each of the five review directions below; do not prescribe specific models. Run in batches if concurrency is limited. If subagents are unavailable, explicitly report blocked review; do not substitute main-agent self-review or claim completion.
-  1. Project rules: check compliance with rules actually applicable to the change.
-  2. Obvious defects: inspect changes for clear functional defects without unrelated context or minor details.
-  3. Git history: use blame and history to identify newly introduced issues.
-  4. Historical PRs: inspect still-applicable comments on related files for recurrence.
-  5. Code comments: check whether changes violate applicable comments in modified files.
-- If history is unavailable, record why and the uncovered scope while continuing other review. Missing material is not evidence of no issues. Do not repeat existing build, type, or similar checks solely for review; verify fixes under Implementation and tests and Evidence reuse.
+- Before delivery, review the implementation changes, including new untracked files, against the applicable rules and baseline. Use PR context when available; otherwise use local diffs. Give any assigned reviewers the scope, baseline, rules, and change summary.
+- Choose review depth and assignments according to change risk, responsibility boundaries, and available review capabilities. Use independent reviewers for distinct risks when useful or required by the user or project; a fixed reviewer count is not required.
+- Cover applicable project rules, functional defects, and constraints in code comments. Consult blame, Git history, or related historical PR comments when needed to understand intent or check recurrence of known problems.
+- Report unavailable evidence and the resulting limits; missing history does not establish absence of defects. If required independent review is unavailable, report that requirement as incomplete and continue other work.
+- Reuse valid build, type, and other check results. Do not rerun checks solely for review; determine verification of fixes under Implementation and tests and Evidence reuse.
 
 ### Issue verification
 
-- For each candidate, reviewers provide location, trigger, impact, evidence, and reasoning. Rule-based issues must cite the specific applicable rule. Issues must result from this change; do not report untouched pre-existing defects as new ones.
+- For each candidate, provide location, trigger, impact, evidence, and reasoning. Rule-based issues must cite the specific applicable rule. Issues must result from this change; do not report untouched pre-existing defects as new ones.
 - Exclude existing issues, style nitpicks, unsupported speculation, and expected behavior. Do not repeat problems explicitly covered by recorded valid compiler, type, lint, or other checks, while still addressing them under implementation requirements. Missing, incomplete, or failed checks do not justify exclusion. Generic quality suggestions are not defects; allowed, applicable exceptions are not violations.
-- The main agent consolidates and deduplicates candidates and assigns each to a reviewer independent of its reporter, supplying the change, claim, and rules. The reviewer checks reality, causation, and specific rule applicability, scoring confidence from 0–100 with evidence using the following criteria. Retain only issues scoring at least 80.
+- Consolidate and deduplicate candidates, then verify reality, causation, and specific rule applicability against the change and evidence. Use a reviewer independent of the reporter when available or required; otherwise disclose self-review. Score confidence from 0–100 using the following criteria and retain only issues scoring at least 80.
 - Confidence measures evidence that an issue is real and introduced by this change. Describe severity and frequency separately; do not use them to alter confidence.
 
 | Score | Verification standard |
@@ -65,7 +62,7 @@
 
 ### Fixes and delivery
 
-- Fix independently verified issues scoring at least 80, determine necessary tests and reverification under Evidence reuse, and arrange subagent review of fix effectiveness and related regressions. Verify new candidates under the same criteria; do not restart a full review without grounds.
+- Fix verified issues scoring at least 80, determine necessary tests and reverification under Evidence reuse, and review fix effectiveness and related regressions with the applicable independence requirements. Verify new candidates under the same criteria; do not restart a full review without grounds.
 - For issues outside authorization or involving major tradeoffs, explain impacts and request necessary decisions instead of silently skipping them. If qualifying issues or necessary reverification remain, report incomplete work, not completion.
 - Report conclusions, fix status, and unverified scope in this chat; do not automatically post PR comments. If none qualify, say "No issues met the reporting threshold," not that code has no issues. Provide precise files and lines; remote code links must use the actual repository, full commit SHA, and corresponding lines.
 

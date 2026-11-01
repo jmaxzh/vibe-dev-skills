@@ -31,23 +31,14 @@ The following independent, optional capabilities require explicit user requests;
 
 - These general rules apply while executing this skill. Conversational answers are responses in chat; deliverables are code, documents, and other artifacts. Each section applies to the objects it names.
 
-### Terms and expression in answers
+### Conversational answers
 
-- This section and Explanation and communication govern conversational answers only. Document artifacts follow Instruction and Documentation Design Principles through the read-on-demand rules.
+These rules govern chat responses. Document artifacts follow the installed Instruction and Documentation Design Principles under [Read on demand](#read-on-demand).
 
-- Prefer project- or document-defined terms; otherwise use standard industry terms. Explain first-use terms when needed for understanding.
-- Use one standard term per concept and one concept per term; do not rotate synonyms merely for variety.
-- Identify the actual meaning of original wording and use standard expression rather than mechanically copying it.
-- Clarify meaning, applicability, and distinctions where terms are ambiguous or definitions conflict.
-- State necessary actors, objects, prerequisites, constraints, and expected results; remove ambiguity.
-- Preserve factual accuracy, logical clarity, and complete meaning. Remove filler, repetition, and ineffective embellishment while retaining necessary background, causality, tradeoffs, and uncertainty.
-- Organize logically, clarify negation, and distinguish possible from confirmed causes.
-- Retain already clear, accurate, compliant wording. Revise only to correct issues, remove ambiguity, or adapt to requirements; avoid oversimplification.
-
-### Explanation and communication
-
-- Start from what readers know. Supply background, reasons, and key concepts needed to understand the topic; do not assume specialized prior knowledge beyond what is reasonable for the reader.
-- Explain processes and mechanisms in causal order, bridging logical gaps: why this is so, how it happens, and the result. Use plain language and concrete examples, with detail proportionate to reader needs.
+- Use project- or document-defined terms; otherwise use standard industry terms. Use one standard term per concept and one concept per term; clarify ambiguous meanings, boundaries, or conflicting definitions. Explain unfamiliar terms when needed for understanding.
+- Express the intended meaning in standard terms. Make necessary actors, objects, prerequisites, constraints, and outcomes explicit; clarify references and the scope of negation.
+- Organize explanations from the reader's existing knowledge in causal order: why, how, and with what result. Supply necessary background and bridge logical gaps with plain language and examples as needed.
+- Preserve facts, complete meaning, tradeoffs, and uncertainty; distinguish possible from confirmed causes. Remove filler and repetition, retaining wording that is already clear and accurate.
 
 ### Delivery quality
 

@@ -5,14 +5,13 @@
 - Initialize projects only on explicit user request.
 - Within authorization, establish project goals and scope, then the knowledge base, then a minimal verifiable engineering skeleton.
 - Read applicable conventions and existing materials. Reuse valid knowledge bases, foundations, stacks, architecture, and structure in existing projects; fill gaps and redesign only unsuitable parts.
-- Reuse settled or confirmed information and check unresolved items individually. Organize questions by importance and difficulty, grouping related secondary matters; provide explanations so users can answer.
+- Reuse settled or confirmed information. Consolidate necessary questions about unresolved matters by importance and related decisions, with enough context for the user to answer.
 - Make routine technical, foundation, tool, and rule decisions within authorization. Follow main-skill confirmation rules for choices exceeding authorization, changing requirements, or involving major user tradeoffs.
 
 ## Establish project goals and scope
 
-- Check project users, problems to solve, and expected outcomes individually.
-- Check responsibilities, capabilities, covered scenarios, and exclusions individually.
-- Derive goals and scope from existing requirements and materials. Reuse explicit or confirmed information without asking again; clarify unresolved matters under Execution scope and order. Cover all elements above, including those not yet settled.
+- Establish users, problems, expected outcomes, responsibilities, capabilities, covered scenarios, and exclusions from existing requirements and materials.
+- Reuse explicit or confirmed information. Identify unresolved elements and clarify only those requiring user input under Execution scope and order.
 
 ## Establish the knowledge base
 
@@ -74,11 +73,11 @@ docs/                                           # Example knowledge-base root
 
 ### UI conventions and brand identity
 
-- For projects with UI, include shared interaction conventions and a visual design system. Reuse confirmed directions and conventions; clarify unresolved items individually under Execution scope and order.
+- For projects with UI, include shared interaction conventions and a visual design system. Reuse confirmed directions and conventions; clarify unresolved decisions under Execution scope and order.
 - Add images or standalone HTML for UI and brand identity as needed under [visual references](project-knowledge-base.md#visual-references).
 - When a design direction must be chosen, offer popular products with similar styles or leading products in the domain, or use user references. Verify reference applicability and explain differences through intuitive examples rather than asking users in specialist terminology.
 - Organize applicable navigation, feedback, component, color, typography, and layout rules from settled references and direction.
-- For public-facing or distributed projects, include brand and product identity conventions. Reuse valid confirmed names, marks, usage direction, and assets; clarify unresolved matters individually. Organize applicable logo, app-icon, and asset-use rules.
+- For public-facing or distributed projects, include brand and product identity conventions. Reuse valid confirmed names, marks, usage direction, and assets; clarify unresolved decisions under Execution scope and order. Organize applicable logo, app-icon, and asset-use rules.
 
 ### Project directory structure
 

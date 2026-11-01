@@ -6,7 +6,7 @@
 ## Lock the scope
 
 - Follow the user-designated scope: for a knowledge-base root or subdirectory, cover all Markdown documents recursively; for specified documents, review only those.
-- Divide targets into batches of 1–3 Markdown documents. Count in-scope documents participating in comparisons as targets; do not enlarge batches through evidence reading. Out-of-scope evidence documents do not count toward batch size.
+- Group targets by topic, volume, and evidence dependencies when useful. Keep in-scope comparison documents in the target inventory and out-of-scope evidence separate; evidence reading must not expand the review scope.
 - Check referenced images and standalone HTML with their target documents as supporting materials, not independent batch documents.
 - Read and cite out-of-scope documents as evidence as needed without treating them as targets or reporting separate issues against them.
 - When tracing from code changes, extract changed objects and locate direct references, behavior descriptions, and higher-level workflow documents.
@@ -14,7 +14,7 @@
 ## Operating boundaries
 
 - For review-only requests, report issues and suggestions without editing files.
-- With revision authorization, first reach evidence-supported conclusions, then complete per-document revision, comparison, integration, and acceptance under the installed `sdlc-instr-doc-design` skill (see [dependency resolution](../SKILL.md#skill-dependencies)). Do not repeat authorization requests within the existing scope.
+- With revision authorization, first reach evidence-supported conclusions, then revise, compare, integrate, and verify the affected content under the installed `sdlc-instr-doc-design` skill (see [dependency resolution](../SKILL.md#skill-dependencies)). Do not repeat authorization requests within the existing scope.
 - Handle confirmation under Updates and rule changes and Human acceptance in [project knowledge-base conventions](project-knowledge-base.md).
 
 ## Judgment statuses
@@ -74,56 +74,38 @@ For suspected duplicate definitions or implementation restatements, follow [cont
 - Do not infer design constraints from current implementation or demand implementation conform to unsupported descriptions.
 - For suspected duplicate definitions, locate definitions and sources, distinguish independent definitions from derived content, and check consistency. Propose evidence-supported revisions under [content boundaries](project-knowledge-base.md#content-boundaries).
 
-## Batching and delegation
+## Review organization and progress
 
-- Batch by topic, content volume, and evidence dependencies. Create one dedicated subagent per batch; never assign multiple batches to one subagent. Return evidence supplementation and corrections to the same agent.
-- The main agent is limited to batching, scheduling, tracking, and consolidation; it must not review documents or decide facts.
-- Supply applicable rules, user conventions, targets, and evidence leads. Schedule within concurrency limits, queuing instead of merging batches or using main-agent review. Report incomplete scope if subagents are unavailable.
-- Each batch returns scope, major claims and normative sources, issues and evidence, cross-document relationships, pending matters, and unverified scope. Retain passed items for cross-review.
-- For resumability, save checkpoints in a temporary work directory, recording progress and evidence indexes: scope, issues, paths, lines, necessary claim summaries, and relationships. Do not copy raw materials or write checkpoints into the knowledge base.
-- On resume, read checkpoints and return changed files to the corresponding batch agent to revisit affected conclusions.
+- Choose review units and assignments by topic, evidence dependencies, risk, and available capabilities. Delegate when useful or required; keep responsibility for complete coverage and evidence-supported conclusions explicit.
+- For delegated work, provide applicable rules, user conventions, targets, and evidence leads. Each result must identify scope, major claims and normative sources, issues and evidence, cross-document relationships, pending matters, and unverified scope. Retain passed items for cross-review.
+- For long or interrupted reviews, save progress and evidence indexes in a temporary work directory: scope, issues, paths, lines, necessary claim summaries, and relationships. Do not copy raw materials or write checkpoints into the knowledge base.
+- On resume, check which files or evidence changed and revisit affected conclusions. Report incomplete scope and unavailable required review capabilities.
 
 ## Cross-review
 
-- After initial review, consolidate claims and relationships. Create topic-based cross-batch review batches with at most 3 target documents each and a new dedicated subagent per batch. Split topics spanning more than 3 documents by related facts to cover all claims.
-- Review multiple sources of truth, duplication, terminology, implementation status, responsibilities, and reference consistency. Read original content and normative sources; summaries alone cannot establish conclusions.
-- For shared facts, verify source and ownership recommendations under [content boundaries](project-knowledge-base.md#content-boundaries) and consistency across batches. Mark insufficient evidence or unresolved authority as needs confirmation; do not arbitrarily select an authority.
-- Assign conflicting conclusions to cross-review agents and evidence supplementation to original batches. Spot-check passed items as needed, add cross-review batches for omissions, and revise conclusions with reasons when new evidence emerges.
+- Check related claims and conclusions across documents for conflicting normative sources, duplication, terminology, implementation status, responsibilities, and reference consistency. Read original content and normative sources; summaries alone cannot establish conclusions.
+- For shared facts, verify source and ownership recommendations under [content boundaries](project-knowledge-base.md#content-boundaries). Mark insufficient evidence or unresolved authority as needs confirmation; do not arbitrarily select an authority.
+- Resolve conflicting conclusions through evidence supplementation and independent review when useful or required. Spot-check passed items as needed, cover omissions, and revise conclusions with reasons when new evidence warrants it.
 
 ## Output
 
 - Present final results in the current chat.
 - Summarize scope and major conclusions, then issues and revision suggestions.
-- Retain all four categories in this order; write "None" for empty ones:
+- Classify issues using these categories, keeping user decisions first. Omit empty categories unless the requested format requires them:
   1. `Conflicts requiring user action`: unclear normative sources, conflicting evidence, or rule tradeoffs requiring information or a decision between documentation and code.
   2. `Documentation content and organization issues`: expression, content, or organization problems without document/code factual differences.
   3. `Document/code mismatch: revise documentation`: clear evidence supports code or dedicated contracts, with obsolete or incorrect documentation.
   4. `Document/code mismatch: change code`: clear evidence supports documented requirements, constraints, or intent, with deviating implementation.
 - When the correct side to change is unresolved, retain needs-confirmation status. Use Conflicts requiring user action only if a user decision is necessary; do not choose independently.
 - In code-change recommendations, group as `p0` for severe security, data-loss, or unavailability risks requiring immediate action, `p1` for key behavior or contract impacts, and `p2` for other confirmed deviations. Explain impact and handling order for each.
-- Use this output skeleton:
-
-```markdown
-## Conflicts requiring user action
-
-## Documentation content and organization issues
-
-## Document/code mismatch: revise documentation
-
-## Document/code mismatch: change code
-### p0
-### p1
-### p2
-```
-
-- End with a batch and evidence index listing initial and cross-review batches, document counts, and agent mappings. Check coverage and report incomplete scope.
+- Include a scope and evidence index sufficient to check coverage and resume unfinished work. For batched or delegated reviews, record document counts, assignments, and cross-review coverage. Report incomplete scope.
 - List verification outcomes, pending matters, and unverified scope. Put pending matters in Conflicts requiring user action only when user information or rule decisions are needed; otherwise explain missing evidence and follow-up checks. For code-change tracing, also list relevance statuses.
 
 ### Issue entries
 
 - Give each issue its own section with a short, plain description of the deviation. Split unrelated issues rather than compressing them into long entries.
 - Explain impacts, priority, and order in prose; priority tags or batch identifiers alone are insufficient. Keep batch identifiers in the evidence index.
-- Use separate paragraphs labeled **Problem**, **Recommendation**, and **Location and evidence**, with blank lines. Do not use issue tables.
+- Make each issue's problem, recommendation, and supporting locations and evidence easy to identify. Use the following labels when helpful.
 - **Problem:** summarize the claim, verified facts, and impacts. Retain verification status and distinguish confirmed deviations from unresolved rule choices.
 - **Recommendation:** specify revision actions. Mark choices between specification and implementation as "Rules must be decided first" rather than presenting unsettled options as executable conclusions.
 - **Location and evidence:** collect target, normative source, and detailed evidence links at the end of each entry, using readable labels and accurate locations or lines. Avoid scattering paths, commands, or batch IDs through problem and recommendation prose.
