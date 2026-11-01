@@ -1,0 +1,18 @@
+{
+  "name": "vibe-dev-skills",
+  "version": "0.1.0",
+  "description": "Skills for requirements, technical design, implementation, documentation, UI, MySQL, and CC Connect.",
+  "author": {
+    "name": "jmaxzh"
+  },
+  "homepage": "https://github.com/jmaxzh/vibe-dev-skills",
+  "repository": "https://github.com/jmaxzh/vibe-dev-skills",
+  "license": "MIT",
+  "keywords": [
+    "vibe-coding",
+    "sdlc",
+    "agent-skills",
+    "developer-tools"
+  ],
+  "skills": "./skills/"
+}

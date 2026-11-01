@@ -1,0 +1,37 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "vibe-dev-skills",
+  "version": "0.1.0",
+  "description": "Skills for requirements, technical design, implementation, documentation, UI, MySQL, and CC Connect.",
+  "author": {
+    "name": "jmaxzh"
+  },
+  "homepage": "https://github.com/jmaxzh/vibe-dev-skills",
+  "repository": "https://github.com/jmaxzh/vibe-dev-skills",
+  "license": "MIT",
+  "keywords": [
+    "vibe-coding",
+    "sdlc",
+    "agent-skills",
+    "developer-tools"
+  ],
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "Vibe Dev Skills",
+        "shortDescription": "A practical software development workflow and specialist skills.",
+        "longDescription": "Plan requirements, design solutions, implement and verify changes, and maintain project knowledge. Includes documentation, UI, MySQL, and CC Connect skills.",
+        "developerName": "jmaxzh",
+        "category": "Developer Tools",
+        "websiteURL": "https://github.com/jmaxzh/vibe-dev-skills",
+        "defaultPrompt": [
+          "Use sdlc-workflow to turn my feature idea into requirements and acceptance criteria.",
+          "Review my MySQL schema and concurrency rules with sdlc-mysql-design."
+        ],
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/icon.png"
+      }
+    }
+  }
+}

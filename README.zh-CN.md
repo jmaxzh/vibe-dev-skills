@@ -1,94 +1,103 @@
 # Vibe Dev Skills
 
-**面向软件开发全生命周期的 Agent Skills——从需求、设计到实施、测试与交付。**
+**面向软件开发生命周期的 Agent Skills——从需求、设计到实施、测试与交付。**
 
 [English](README.md) | 简体中文
 
-将 Vibe Coding 想法转化为清晰的需求、技术方案，以及具有明确验证要求的实现。Vibe Dev Skills 提供 SDLC 主流程，并配套 UI、MySQL、文档设计和消息平台集成等专项技能。
-
-主流程复用已有决策与证据，补齐缺失的前置成果，连续推进至你指定的阶段。专项技能也可独立使用。
+将 Vibe Coding 想法转化为需求、技术方案和具有明确验证要求的实现。套件包含开发工作流，以及文档、UI、MySQL 和 CC Connect 专项技能。
 
 ## 技能
 
-| 技能 | 用途 | 启用方式 |
+| 技能 | 用途 | 启用与依赖 |
 | --- | --- | --- |
-| [SDLC 工作流](locales/zh-CN/sdlc-workflow/SKILL.md) | 需求、技术方案、实施、测试及知识库维护 | 显式调用；项目初始化与知识库专项审查须单独明确要求 |
-| [界面与交互设计](locales/zh-CN/sdlc-ui-interaction/SKILL.md) | 桌面端、移动端与网页的界面行为和设计 | 适用的 UI 任务 |
-| [MySQL 数据表与 SQL 设计](locales/zh-CN/sdlc-mysql-design/SKILL.md) | 数据建模、SQL、索引、事务与并发控制 | 任务须明确以 MySQL 为目标数据库 |
-| [指令与文档设计](locales/zh-CN/sdlc-instr-doc-design/SKILL.md) | 提示词、技能、指令及面向读者的文档 | 文档产物任务，不用于普通对话 |
-| [CC Connect 集成](locales/zh-CN/cc-connect-integration/SKILL.md) | 消息平台接入本机编程工具的部署与维护，可选 Codex 桌面副本 | CC Connect 集成任务 |
+| [SDLC 工作流](translations/zh-CN/skills/sdlc-workflow/SKILL.zh-CN.md) | 需求、技术方案、实施、验证与知识库维护 | 显式调用；文档任务需要 `sdlc-instr-doc-design` |
+| [指令与文档设计](translations/zh-CN/skills/sdlc-instr-doc-design/SKILL.zh-CN.md) | 指令、提示词、技能及面向读者的文档 | 文档产物任务，可独立使用 |
+| [界面与交互设计](translations/zh-CN/skills/sdlc-ui-interaction/SKILL.zh-CN.md) | 桌面、移动与网页设计和行为 | 适用的 UI 任务 |
+| [MySQL 数据表与 SQL 设计](translations/zh-CN/skills/sdlc-mysql-design/SKILL.zh-CN.md) | 建模、SQL、索引、事务与并发 | 必须已明确以 MySQL 为目标数据库 |
+| [CC Connect 集成](translations/zh-CN/skills/cc-connect-integration/SKILL.zh-CN.md) | 消息平台接入本地代理及可选桌面副本 | CC Connect 集成任务 |
+
+默认安装完整套件，但不会为每项任务启用全部技能。项目初始化和知识库专项审查仍须明确要求。
 
 ## 安装
 
-使用支持 `SKILL.md` 技能的编程代理。本仓库包含指令与参考资料，不是独立应用；技能发现方式和安装路径由所用工具决定，请使用该工具文档指定的技能目录。
+下列 GitHub 命令需要先将分发改动发布到仓库。测试尚未发布的检出目录时，使用其实际绝对路径作为来源，见[本地验证与分发](translations/zh-CN/docs/distribution.md)。
 
-1. 将仓库克隆到代理自动发现技能的目录之外：
+### Codex
 
-   ```sh
-   git clone https://github.com/jmaxzh/vibe-dev-skills.git
-   cd vibe-dev-skills
-   ```
+```sh
+codex plugin marketplace add jmaxzh/vibe-dev-skills
+```
 
-2. 选择**一种**指令语言。默认使用英文；如需中文，采用下列设置：
+在受支持的插件界面中，从已配置市场安装 **Vibe Dev Skills**。提供 `plugin add` 的 CLI 版本还支持：
 
-   ```sh
-   skill_source_dir="locales/zh-CN"
-   # 如需默认英文版：
-   # skill_source_dir="."
-   ```
+```sh
+codex plugin add vibe-dev-skills@vibe-dev-skills
+```
 
-3. 将目标路径替换为所用工具的实际技能目录。替换已有安装前先备份；以下命令发现任一同名技能已存在时会停止。
+### Claude Code
 
-   ```sh
-   skill_target_dir="/absolute/path/to/your/agent/skills"
-   mkdir -p "$skill_target_dir"
+```sh
+claude plugin marketplace add jmaxzh/vibe-dev-skills
+claude plugin install vibe-dev-skills@vibe-dev-skills
+```
 
-   for skill_name in sdlc-workflow sdlc-ui-interaction sdlc-mysql-design sdlc-instr-doc-design cc-connect-integration; do
-     if [ -e "$skill_target_dir/$skill_name" ] || [ -L "$skill_target_dir/$skill_name" ]; then
-       echo "Skill already exists: $skill_target_dir/$skill_name" >&2
-       exit 1
-     fi
-   done
+### skills CLI
 
-   for skill_name in sdlc-workflow sdlc-ui-interaction sdlc-mysql-design sdlc-instr-doc-design cc-connect-integration; do
-     cp -R "$skill_source_dir/$skill_name" "$skill_target_dir/"
-   done
-   ```
+安装全部五项英文技能，并选择受支持的代理：
 
-4. 按所用代理的要求重新加载技能，确认五个技能名称均可用。
+```sh
+npx skills add jmaxzh/vibe-dev-skills --skill '*'
+```
 
-五个技能目录应并列安装，以保持跨技能引用有效。不要递归安装整个仓库，也不要同时安装两种语言：两个版本使用相同技能名称。复制时包含 `references/` 及 CC Connect 的 `scripts/`，不要只复制 `SKILL.md`。
+工作流的最小完整组合为：
 
-## 使用示例
+```sh
+npx skills add jmaxzh/vibe-dev-skills \
+  --skill sdlc-workflow \
+  --skill sdlc-instr-doc-design
+```
 
-使用所用代理支持的语法显式调用主流程，或在请求中写出技能名称：
+其余四项技能可单独安装。不要把只安装工作流视为文档任务的完整安装；每项技能均保留 MIT 声明。
 
-> 使用 sdlc-workflow。我想开发一个小型问题跟踪工具。先明确需求，再设计技术方案，最后实施并完成适当的测试。复用项目已有决策，遇到阻塞后续工作的未决事项时暂停受影响部分。
+### 手动安装
+
+将 `skills/` 中五个目录并列复制到代理文档指定的技能目录，保留 `references/`、CC Connect 的 `scripts/` 和许可证。替换既有安装前先备份。不要将仓库根目录或维护译文复制到自动发现技能的目录。
+
+## 使用
+
+通过代理实际注册的名称或命名空间调用工作流：
+
+> 使用 sdlc-workflow。开发一个小型问题跟踪工具：先明确需求，再设计方案，然后实施并完成适当测试。复用现有决策，仅暂停被未决事项阻塞的工作。
 
 只推进到指定阶段：
 
 > 使用 sdlc-workflow，将这个功能想法整理为需求和验收标准。停在技术方案阶段之前。
 
-独立使用专项技能：
+专项任务：
 
-> 使用 sdlc-mysql-design，审查这份 MySQL 订单表结构和库存扣减 SQL。说明完整性与并发风险，区分项目约定和 MySQL 功能限制。
+> 使用 sdlc-mysql-design，审查这份 MySQL 订单表结构与库存扣减 SQL。说明完整性、并发风险，并区分项目约定和 MySQL 功能限制。
 
-消息平台集成：
+集成任务：
 
-> 使用 cc-connect-integration，检查我现有的 CC Connect 部署，为选定的消息平台制定调整方案。先验证消息主链路，再考虑可选的桌面镜像。
+> 使用 cc-connect-integration，检查既有配置。先验证消息主链路，再考虑可选桌面镜像。
 
-以上内容是请求示例，不是已完成部署的记录或性能测试结果。
+工作流按需通过运行环境实际名称和命名空间加载已安装的文档设计技能。缺少必需资料时暂停依赖部分，不静默跳过规则或自动安装依赖。以上是请求示例，不是已完成部署记录。
 
 ## 语言与维护
 
-- 根目录技能为默认英文版。[中文版](locales/zh-CN/)包含全部五项技能、参考文档及相同的 CC Connect 脚本。
-- 指令语言不强制决定对话或交付产物的语言；可在请求中明确你的偏好。
-- 修改行为、条件、示例或链接时，同步维护对应翻译。技能名称、配置键和协议标识在两种语言中保持一致。
-- 贡献技能或相关文档时，遵循[技能维护规则](locales/zh-CN/AGENTS.md)及其引用的设计原则。
+英文是唯一安装指令版本和规范性来源。[中文译文](translations/zh-CN/README.md)用于开发者理解与维护，不作为运行技能；英文指令不强制决定用户对话或交付产物的语言。
+
+同一次变更中同步对应译文。运行脚本及测试只在所属英文技能目录维护一份。遵循[维护规则](translations/zh-CN/AGENTS.zh-CN.md)。
+
+## 分发与许可证
+
+Codex 与 Claude Code 使用同一个五技能插件；skills.sh 支持 GitHub 安装与发现，SkillsMP 索引公开源技能。市场安装不等于公共目录审核通过。见[分发说明](translations/zh-CN/docs/distribution.md)、[提交准备](translations/zh-CN/docs/submission.md)及[验证记录](translations/zh-CN/docs/verification.md)。
+
+采用 [MIT](LICENSE)。所有者已确认改编的 CC Connect 镜像脚本也可按 MIT 分发，见[来源与许可说明](translations/zh-CN/docs/provenance.md)。
 
 ## 能力边界
 
-- 技能为代理提供执行指导；实际完成能力取决于工具权限、可用集成和验证结果。技能本身不提供托管、CI 或自动部署服务。
-- MySQL 技能包含特定项目约定，例如显式事务内禁止查询、禁止外键、`CHECK` 和存储过程。采用前请阅读技能正文。
-- CC Connect 桌面镜像为可选的只读副本功能。随包 Codex 适配器针对文档所述的 legacy 会话格式及 IPC v11；提供的部署方式为 macOS。兼容性、真实消息收发和桌面显示需要在目标机器验证。
-- CC Connect 脚本在两个版本中保持相同行为，包括中文标题处理规则与测试数据。文档翻译不修改运行时文案，也不新增运行时语言选择器。
+- 技能提供执行指导，实际结果取决于权限、集成与验证；本身不提供托管、CI 服务或自动部署。
+- MySQL 规则包含项目约定：显式事务内禁止查询，禁止外键、`CHECK` 和存储过程；采用前先阅读正文。
+- CC Connect 镜像为可选只读副本，随包 Codex 适配器针对 legacy 会话和 IPC v11，服务部署方式为 macOS。真实消息收发、桌面显示、登录恢复和兼容性须在目标机器验证。
+- 脚本保留既有中文标题处理和测试数据，英文技能指令不改变运行文案。

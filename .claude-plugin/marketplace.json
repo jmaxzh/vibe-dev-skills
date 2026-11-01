@@ -1,0 +1,18 @@
+{
+  "name": "vibe-dev-skills",
+  "owner": {
+    "name": "jmaxzh"
+  },
+  "metadata": {
+    "description": "The Vibe Dev Skills development suite.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "vibe-dev-skills",
+      "source": "./",
+      "description": "Skills for requirements, technical design, implementation, documentation, UI, MySQL, and CC Connect.",
+      "version": "0.1.0"
+    }
+  ]
+}
