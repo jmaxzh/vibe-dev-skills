@@ -38,24 +38,15 @@ Before starting, establish the scope, document purpose, and applicable conventio
 
 ### Review only
 
-- Organize the review appropriately for the task; document-by-document execution is not required.
 - Report specific locations, problems, impacts, and revision suggestions. Distinguish confirmed issues, matters needing confirmation, and unverified scope.
 
 ### Review and revise
 
-Work document by document. Related documents may be read in advance for context, but each document being changed must complete revision, comparison, and integration, and pass acceptance before changes begin on the next document. Do not revise multiple documents first and compare or integrate them afterward as a batch.
-
-Before revising a document, preserve a retrievable original, identify actual issues, and set revision goals. Explain why documents needing no change are left unchanged.
-
-1. **Revise**: address identified issues; leave content unchanged when no change is needed.
-2. **Compare**: compare original and revised versions, explicitly assessing their strengths and weaknesses. Check retention of useful information, necessary explanations, conditions, constraints, and behavioral boundaries. Decide what to retain, restore, or adjust. Viewing a diff alone does not complete this step; reach specific conclusions.
-3. **Integrate**: retain useful improvements and restore or integrate valuable original content omitted from the revision. Resolve conflicts according to document goals, facts, and applicable constraints. If no additional edit is needed, explicitly explain how original strengths were retained and why no adjustment is necessary. Do not skip this step.
-
-After these steps, compare the integrated result with the original for acceptance. Finish the document if it meets the completion criteria. Otherwise, if a clear improvement is possible, revise again and repeat comparison, integration, and acceptance. If a satisfactory revision cannot be produced, restore the original and report unresolved issues and reasons.
-
-Before moving to the next document, briefly record changes, comparison conclusions, integration decisions, and acceptance results. A progress update is sufficient; no separate report file is required. Record concrete findings, not just claims that comparison or integration occurred.
-
-After all documents are complete, check cross-document consistency. Apply the same process to any documents requiring follow-up changes.
+- Base changes on identified issues and revision goals; leave useful content unchanged when no change is needed.
+- Keep the original retrievable so changes can be assessed and unsatisfactory edits reversed. Version control or a separate snapshot may serve this purpose.
+- Choose the unit and order of work according to scope, dependencies, and risk. Related documents may be revised together when this helps maintain consistency; no fixed sequence of revision stages is required.
+- Compare the result with the original to assess improvements and regressions. Preserve useful information, necessary explanations, conditions, constraints, and behavioral boundaries; restore or integrate valuable content omitted during revision. A diff supports this assessment but does not replace judgment about meaning and usefulness.
+- Resolve conflicts using document goals, facts, and applicable constraints. Check affected cross-document relationships. If an edit cannot meet the completion criteria, restore the affected content and report the unresolved issue and reason.
 
 ### Completion criteria and reporting
 

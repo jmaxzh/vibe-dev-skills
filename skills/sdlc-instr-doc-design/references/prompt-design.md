@@ -5,12 +5,12 @@ When designing, writing, modifying, or reviewing instructions, prompts, skills, 
 ## General principles
 
 1. Minimum sufficient instructions: retain only instructions affecting execution or results; avoid repetition, filler, and unnecessary constraints.
-2. Explicit and actionable: use concise, clear imperatives; identify the actors, objects, conditions, actions, and outcomes needed to carry out the task.
+2. Explicit and actionable: state required behavior clearly and concisely; identify the actors, objects, conditions, actions, and outcomes needed to carry out the task.
 3. Avoid repeating general knowledge: do not restate basic knowledge or capabilities the model already has, but retain task-specific constraints.
-4. Select dimensions as needed: use the general dimensions to assess every prompt; apply scenario-specific dimensions only when their activation conditions hold.
+4. Select dimensions as needed: assess every prompt against the general dimensions; apply scenario-specific dimensions only when their activation conditions hold.
 5. Clear boundaries: separate instructions from data; specify evidence requirements, permissions, and handling of uncertainty only as required by the task.
 6. Outcome-oriented: specify expected results, necessary constraints, and completion criteria.
-7. Context, not Control: provide relevant background, facts, reasons for constraints, and tradeoffs to support judgment. Let the model choose methods unless task dependencies, interface requirements, or identified risks require specific steps.
+7. Context, not Control: provide goals, relevant context, reasons for constraints, tradeoffs, and acceptance criteria so the model can choose appropriate methods. Prescribe steps, order, formats, or roles only when task dependencies, interface requirements, or identified risks justify them, or when the user or higher-priority instructions explicitly require them.
 
 Concept references: [Netflix: Context, not Control](https://www.jobs.netflix.com/culture); [ByteDance: Context over Control](https://www.bytedance.com/about).
 
@@ -22,7 +22,7 @@ Use these dimensions to assess whether a prompt provides sufficient guidance. Th
 | --- | --- | --- | --- |
 | Task definition | Specify goals, objects, outcomes, and completion criteria, with context and tradeoffs needed for judgment | Vague goals, unclear objects, missing decision context, unrelated background | Supports informed method choices and makes completion requirements understandable |
 | Instruction clarity | Use concise, actionable instructions identifying necessary actors, objects, conditions, actions, and results | Ambiguity, missing conditions, requirements that do not guide action | Reduces ambiguity and unnecessary inference |
-| Instruction length | Use minimum sufficient instructions; retain conditions affecting execution or outcomes | Synonymous repetition, basic knowledge, generic admonitions, filler | Reduces redundancy and overconstraint without losing specific rules |
+| Instruction length | Use minimum sufficient instructions; retain conditions affecting execution or outcomes | Repeating the same rule in different words, restating basic knowledge, generic admonitions, filler | Reduces redundancy and unnecessary constraints without losing specific rules |
 | Input organization | Separate task instructions from the content to process; use fields or separators when necessary | Mixing instructions with data or imposing unnecessary structure on simple input | Makes clear what to process without unnecessary structure |
 | Output constraints | Specify required content; constrain format, length, or structure only as needed for use | Omitting requirements that affect usability or adding unnecessary formatting constraints | Ensures usable results without unnecessary restrictions |
 
@@ -44,7 +44,11 @@ Add instructions for these dimensions only when the activation scenario applies 
 
 ## Instruction maintenance
 
-Apply these principles when adding, revising, compressing, or removing prompt content.
+Apply these principles when adding, revising, compressing, or removing prompt content, including this skill and its references when they are the revision target.
+
+Assess both existing and proposed requirements for steps, order, formats, or roles. Identify the task need each requirement serves, then consider whether decision context and acceptance criteria would achieve the same goal while leaving method choices open. Retain requirements with a concrete justification; replace unnecessary process controls with the context and outcome requirements needed for judgment. Do not invent a justification merely to retain an existing rule.
+
+Preserve procedures that govern the current task when explicitly required by the user or higher-priority instructions. A procedure in the text being revised is still subject to review; retain it only when justified or required for the revised artifact.
 
 | Operation | Principle |
 | --- | --- |
@@ -54,6 +58,12 @@ Apply these principles when adding, revising, compressing, or removing prompt co
 | Remove | Remove instructions with no effect on execution or outcomes; do not remove necessary constraints merely because the model knows them |
 | Merge | Merge rules with the same applicability and expected behavior; retain independent rules with distinct conditions, objects, or effects |
 | Retain | Keep instructions materially affecting correctness, evidence boundaries, permissions, or necessary exception handling |
+
+## Validation scope
+
+Use textual review to assess whether the instructions support the intended goals and preserve necessary boundaries. Revisions must address unnecessary process controls alongside wording issues; remaining controls need a concrete justification or an explicit user or higher-priority requirement. If the wording leaves uncertainty, walk through representative scenarios: can unnecessary process controls be removed while necessary constraints and explicitly required procedures remain intact?
+
+Actual model execution and before-and-after evaluations are not default completion requirements; perform them only when the user explicitly requests them. An unavailable runtime environment does not block textual revision and review. Distinguish textual findings, scenario-based inferences, file or loading checks, and any observed runtime results. Do not present inferred effects as verified runtime behavior or generalize beyond the evidence.
 
 ## Final checklist
 
@@ -66,5 +76,6 @@ Apply these principles when adding, revising, compressing, or removing prompt co
 - Are examples representative, consistent, and free of accidental constraints?
 - Is there enough relevant context to choose methods and assess tradeoffs without unnecessary background?
 - Does each prescribed step, format, structure, or role serve a concrete task need, or could context and outcome requirements replace it?
+- Do conclusions stay within the evidence from review, scenario walkthroughs, or any requested runtime evaluation?
 
 Core principle: use minimum sufficient instructions, decision-relevant context, explicit goals and necessary boundaries, and scenario-specific additions only as needed. Do not repeat general knowledge or add instructions for formal completeness.
